@@ -1,0 +1,42 @@
+version: '3.8'
+
+# Development overrides - use with: podman-compose -f podman-compose.yml -f podman-compose.dev.yml up
+
+services:
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./backend/src:/app/src:z
+      - techjobs-data:/app/data
+    environment:
+      - NODE_ENV=development
+      - GOOGLE_CALLBACK_URL=http://localhost:3001/auth/google/callback
+      - FRONTEND_URL=http://localhost:5173
+      - CORS_ORIGIN=http://localhost:5173
+    # Override healthcheck to use curl (installed in dev image)
+    healthcheck:
+      test: ["CMD", "node", "-e", "fetch('http://localhost:3001/health').then(r => process.exit(r.ok ? 0 : 1)).catch(() => process.exit(1))"]
+      interval: 5s
+      timeout: 3s
+      retries: 3
+      start_period: 5s
+    command: npm run dev
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile.dev
+    volumes:
+      - ./frontend/src:/app/src:z
+      - ./frontend/index.html:/app/index.html:z
+    environment:
+      - NODE_ENV=development
+      - BACKEND_URL=http://backend:3001
+    ports:
+      - "5173:5173"
+    # Remove strict health dependency for dev
+    depends_on:
+      - backend
+    command: npm run dev -- --host
