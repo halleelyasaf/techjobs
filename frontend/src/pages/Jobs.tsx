@@ -42,7 +42,7 @@ export default function Jobs() {
     if (initialCategory) {
       setFilters(prev => ({ ...prev, categories: [initialCategory] }));
     }
-  }, []);
+  }, [initialCategory]);
   const [isFilterOpen, setIsFilterOpen] = useState(false);
   const [currentPage, setCurrentPage] = useState(1);
 
