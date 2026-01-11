@@ -15,10 +15,15 @@ import {
   HeartPulse,
   Coins,
   Rocket,
-  Plus
+  Plus,
+  Bookmark,
+  LogIn,
+  LogOut,
+  User
 } from "lucide-react";
 import { motion } from "framer-motion";
 import AddCompanyModal from "@/components/AddCompanyModal";
+import { useAuth } from "@/hooks/useAuth";
 
 const categories = [
   { name: "AI/ML", icon: Cpu, color: "from-violet-500 to-purple-600" },
@@ -38,9 +43,18 @@ const stats = [
 export default function Home() {
   const navigate = useNavigate();
   const [showAddCompany, setShowAddCompany] = useState(false);
+  const { user, isAuthenticated, isLoading, login, logout } = useAuth();
 
   const handleCategoryClick = (categoryName: string) => {
     navigate(`${createPageUrl("Jobs")}?category=${encodeURIComponent(categoryName)}`);
+  };
+
+  const handleLogin = () => {
+    login(window.location.href);
+  };
+
+  const handleLogout = async () => {
+    await logout();
   };
 
   return (
@@ -52,8 +66,79 @@ export default function Home() {
           <div className="absolute top-20 left-10 w-72 h-72 bg-white/5 rounded-full blur-3xl" />
           <div className="absolute bottom-10 right-10 w-96 h-96 bg-purple-500/10 rounded-full blur-3xl" />
         </div>
+
+        {/* Header inside Hero */}
+        <header className="relative z-10">
+          <div className="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+            <Link to={createPageUrl("Home")} className="flex items-center gap-2 font-bold text-xl text-white">
+              <div className="w-8 h-8 rounded-lg bg-white/20 flex items-center justify-center text-sm font-bold">
+                TM
+              </div>
+              <span className="hidden sm:inline">TechMap</span>
+            </Link>
+
+            <nav className="flex items-center gap-2">
+              <Button asChild variant="ghost" size="sm" className="text-white/80 hover:text-white hover:bg-white/10">
+                <Link to={createPageUrl("Companies")}>
+                  <Building2 className="w-4 h-4 mr-2" />
+                  <span className="hidden sm:inline">Companies</span>
+                </Link>
+              </Button>
+              <Button asChild variant="ghost" size="sm" className="text-white/80 hover:text-white hover:bg-white/10">
+                <Link to={createPageUrl("SavedJobs")}>
+                  <Bookmark className="w-4 h-4 mr-2" />
+                  <span className="hidden sm:inline">Saved</span>
+                </Link>
+              </Button>
+
+              <div className="ml-2 pl-2 border-l border-white/20">
+                {isLoading ? (
+                  <div className="w-8 h-8 rounded-full bg-white/20 animate-pulse" />
+                ) : isAuthenticated && user ? (
+                  <div className="flex items-center gap-2">
+                    <div className="hidden md:flex items-center gap-2">
+                      {user.picture ? (
+                        <img 
+                          src={user.picture} 
+                          alt={user.name}
+                          className="w-8 h-8 rounded-full border-2 border-white/30"
+                        />
+                      ) : (
+                        <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center">
+                          <User className="w-4 h-4 text-white" />
+                        </div>
+                      )}
+                      <span className="text-sm text-white/90 max-w-[100px] truncate">
+                        {user.name?.split(' ')[0]}
+                      </span>
+                    </div>
+                    <Button 
+                      variant="ghost" 
+                      size="sm" 
+                      onClick={handleLogout}
+                      className="text-white/80 hover:text-white hover:bg-white/10"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      <span className="hidden sm:inline ml-2">Logout</span>
+                    </Button>
+                  </div>
+                ) : (
+                  <Button 
+                    variant="default" 
+                    size="sm" 
+                    onClick={handleLogin}
+                    className="bg-white text-indigo-700 hover:bg-indigo-50"
+                  >
+                    <LogIn className="w-4 h-4 mr-2" />
+                    <span className="hidden sm:inline">Sign in</span>
+                  </Button>
+                )}
+              </div>
+            </nav>
+          </div>
+        </header>
         
-        <div className="relative max-w-7xl mx-auto px-4 py-20 md:py-32">
+        <div className="relative max-w-7xl mx-auto px-4 py-16 md:py-28">
           <motion.div
             initial={{ opacity: 0, y: 30 }}
             animate={{ opacity: 1, y: 0 }}
@@ -91,9 +176,8 @@ export default function Home() {
               </Button>
               <Button 
                 asChild 
-                variant="outline" 
                 size="lg" 
-                className="border-white/30 text-white hover:bg-white/10 text-lg px-8 py-6 rounded-xl"
+                className="bg-white/10 border-2 border-white/30 text-white hover:bg-white/20 text-lg px-8 py-6 rounded-xl backdrop-blur-sm"
               >
                 <a href="https://maphub.net/mluggy/techmap" target="_blank" rel="noopener noreferrer">
                   <MapPin className="w-5 h-5 mr-2" />

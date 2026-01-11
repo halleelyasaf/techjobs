@@ -9,6 +9,7 @@ interface LayoutProps {
 export default function Layout({ children, currentPageName }: LayoutProps) {
   const isHomePage = currentPageName === 'Home';
   
+  // Home page handles its own header inside the hero
   if (isHomePage) {
     return <>{children}</>;
   }

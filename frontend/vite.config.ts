@@ -25,4 +25,18 @@ export default defineConfig({
       },
     },
   },
+  preview: {
+    port: parseInt(process.env.PORT || '4173'),
+    host: true,
+    proxy: {
+      '/api': {
+        target: backendUrl,
+        changeOrigin: true,
+      },
+      '/auth': {
+        target: backendUrl,
+        changeOrigin: true,
+      },
+    },
+  },
 })
