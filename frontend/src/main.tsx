@@ -10,10 +10,7 @@ const posthogHost = import.meta.env.VITE_PUBLIC_POSTHOG_HOST
 const options = {
   api_host: posthogHost,
   capture_pageview: true,
-  autocapture: {
-    dom_event_allowlist: ['click'],
-    element_allowlist: ['button', 'a'],
-  },
+  autocapture: true,
 }
 
 createRoot(document.getElementById('root')!).render(
