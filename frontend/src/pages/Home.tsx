@@ -298,20 +298,27 @@ export default function Home() {
               Add Your Company
             </Button>
             
-            <div className="flex items-center gap-6 text-sm">
-              <Link 
-                to={createPageUrl("PrivacyPolicy")} 
-                className="text-slate-400 hover:text-white transition-colors"
+            <div className="flex items-center gap-3">
+              <Button
+                asChild
+                variant="ghost"
+                size="sm"
+                className="text-slate-400 hover:text-white hover:bg-slate-800"
               >
-                Privacy Policy
-              </Link>
-              <span className="text-slate-700">•</span>
-              <Link 
-                to={createPageUrl("TermsOfService")} 
-                className="text-slate-400 hover:text-white transition-colors"
+                <Link to={createPageUrl("PrivacyPolicy")}>
+                  Privacy Policy
+                </Link>
+              </Button>
+              <Button
+                asChild
+                variant="ghost"
+                size="sm"
+                className="text-slate-400 hover:text-white hover:bg-slate-800"
               >
-                Terms of Service
-              </Link>
+                <Link to={createPageUrl("TermsOfService")}>
+                  Terms of Service
+                </Link>
+              </Button>
             </div>
             
             <p className="text-slate-500 text-xs">
