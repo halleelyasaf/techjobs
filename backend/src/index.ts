@@ -11,6 +11,11 @@ import path from 'path';
 const app = express();
 const PORT = process.env.PORT || 3001;
 
+// Trust proxy (required for Render, Railway, etc.)
+if (process.env.NODE_ENV === 'production') {
+  app.set('trust proxy', 1);
+}
+
 // Session store
 const SQLiteSessionStore = SQLiteStore(session);
 const sessionStore = new SQLiteSessionStore({
@@ -41,7 +46,7 @@ app.use(session({
     secure: process.env.NODE_ENV === 'production',
     httpOnly: true,
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
-    sameSite: process.env.NODE_ENV === 'production' ? 'strict' : 'lax'
+    sameSite: 'lax' // Must be 'lax' for OAuth redirects to work
   }
 }));
 
@@ -61,10 +66,22 @@ app.use('/auth', authRouter);
 app.use('/api/saved-jobs', savedJobsRouter);
 app.use('/api/companies', companiesRouter);
 
-// 404 handler
-app.use((req, res) => {
-  res.status(404).json({ error: 'Not found' });
-});
+// Serve frontend in production
+const publicPath = path.join(__dirname, '..', 'public');
+if (process.env.NODE_ENV === 'production') {
+  // Serve static files
+  app.use(express.static(publicPath));
+  
+  // SPA fallback - serve index.html for all non-API routes
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(publicPath, 'index.html'));
+  });
+} else {
+  // 404 handler for development
+  app.use((req, res) => {
+    res.status(404).json({ error: 'Not found' });
+  });
+}
 
 // Error handler
 app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {

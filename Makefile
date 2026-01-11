@@ -11,7 +11,7 @@ help:
 	@echo "TechJobs - Container Management"
 	@echo "================================"
 	@echo ""
-	@echo "Production:"
+	@echo "Production (local):"
 	@echo "  make build       - Build production images"
 	@echo "  make up          - Start production services"
 	@echo "  make down        - Stop production services"
@@ -29,6 +29,10 @@ help:
 	@echo "Development (local, no containers):"
 	@echo "  make dev-backend   - Run backend locally"
 	@echo "  make dev-frontend  - Run frontend locally"
+	@echo ""
+	@echo "Cloud Deployment:"
+	@echo "  Render auto-deploys on git push to main"
+	@echo "  URL: https://techjobs-bi60.onrender.com"
 	@echo ""
 
 # ============================================
