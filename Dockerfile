@@ -3,10 +3,19 @@
 # ============ Build Frontend ============
 FROM node:20-alpine AS frontend-builder
 
+# Build args for Vite environment variables
+ARG VITE_PUBLIC_POSTHOG_KEY
+ARG VITE_PUBLIC_POSTHOG_HOST
+
 WORKDIR /app/frontend
 COPY frontend/package*.json ./
 RUN npm ci
 COPY frontend/ ./
+
+# Pass build args as env vars for Vite build
+ENV VITE_PUBLIC_POSTHOG_KEY=$VITE_PUBLIC_POSTHOG_KEY
+ENV VITE_PUBLIC_POSTHOG_HOST=$VITE_PUBLIC_POSTHOG_HOST
+
 RUN npm run build
 
 # ============ Build Backend ============
