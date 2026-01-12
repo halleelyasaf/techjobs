@@ -15,7 +15,7 @@ CREATE TABLE IF NOT EXISTS users (
 -- Saved jobs with user association
 CREATE TABLE IF NOT EXISTS saved_jobs (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  user_id UUID REFERENCES users(id) ON DELETE CASCADE,
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   job_title TEXT NOT NULL,
   company TEXT NOT NULL,
   category TEXT,
@@ -47,13 +47,21 @@ CREATE TABLE IF NOT EXISTS companies (
   updated_date TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- Session table for connect-pg-simple (express-session persistence)
+CREATE TABLE IF NOT EXISTS "session" (
+  "sid" VARCHAR NOT NULL COLLATE "default",
+  "sess" JSON NOT NULL,
+  "expire" TIMESTAMP(6) NOT NULL,
+  PRIMARY KEY ("sid")
+);
+CREATE INDEX IF NOT EXISTS "IDX_session_expire" ON "session" ("expire");
+
 -- Indexes for better query performance
+-- Note: email and companies.name already have UNIQUE constraints which create indexes
 CREATE INDEX IF NOT EXISTS idx_users_google_id ON users(google_id);
-CREATE INDEX IF NOT EXISTS idx_users_email ON users(email);
 CREATE INDEX IF NOT EXISTS idx_saved_jobs_user_id ON saved_jobs(user_id);
 CREATE INDEX IF NOT EXISTS idx_saved_jobs_url ON saved_jobs(url);
 CREATE INDEX IF NOT EXISTS idx_saved_jobs_company ON saved_jobs(company);
-CREATE INDEX IF NOT EXISTS idx_companies_name ON companies(name);
 
 -- Enable Row Level Security (RLS)
 ALTER TABLE users ENABLE ROW LEVEL SECURITY;
@@ -80,6 +88,12 @@ CREATE POLICY "Anyone can read companies" ON companies
 
 -- Service role can manage companies
 CREATE POLICY "Service role can manage companies" ON companies
+  FOR ALL
+  USING (auth.role() = 'service_role');
+
+-- RLS Policies for session table
+ALTER TABLE "session" ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Service role can manage sessions" ON "session"
   FOR ALL
   USING (auth.role() = 'service_role');
 

@@ -20,8 +20,12 @@ passport.deserializeUser(async (id: string, done) => {
       .single();
 
     if (error) {
-      console.error('Error deserializing user:', error);
-      return done(null, null);
+      // PGRST116 means user not found - treat as logged out, not error
+      if (error.code === 'PGRST116') {
+        return done(null, null);
+      }
+      console.error('Error deserializing user:', error.code, error.message);
+      return done(null, null); // Graceful degradation - user appears logged out
     }
 
     done(null, user as User);
@@ -72,21 +76,23 @@ const setupGoogleStrategy = () => {
         if (existingUser) {
           // Update existing user
           const now = new Date().toISOString();
+          const updatePayload: Partial<User> = {
+            name,
+            picture,
+            email,
+            updated_date: now
+          };
+          
           const { data: updatedUser, error: updateError } = await supabase
             .from('users')
-            .update({
-              name,
-              picture,
-              email,
-              updated_date: now
-            } as any)
-            .eq('id', (existingUser as any).id)
+            .update(updatePayload)
+            .eq('id', existingUser.id)
             .select()
             .single();
 
           if (updateError) {
             console.error('Error updating user:', updateError);
-            return done(updateError as any, undefined);
+            return done(updateError, undefined);
           }
 
           user = updatedUser as User;
@@ -95,23 +101,25 @@ const setupGoogleStrategy = () => {
           const id = uuidv4();
           const now = new Date().toISOString();
 
+          const insertPayload: Omit<User, 'created_date' | 'updated_date'> & { created_date: string; updated_date: string } = {
+            id,
+            google_id: googleId,
+            email,
+            name,
+            picture,
+            created_date: now,
+            updated_date: now
+          };
+
           const { data: newUser, error: insertError } = await supabase
             .from('users')
-            .insert({
-              id,
-              google_id: googleId,
-              email,
-              name,
-              picture,
-              created_date: now,
-              updated_date: now
-            } as any)
+            .insert(insertPayload)
             .select()
             .single();
 
           if (insertError) {
             console.error('Error creating user:', insertError);
-            return done(insertError as any, undefined);
+            return done(insertError, undefined);
           }
 
           user = newUser as User;

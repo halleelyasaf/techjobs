@@ -56,23 +56,24 @@ export default function SavedJobs() {
   const appliedCount = savedJobs.filter(j => j.applied).length;
   
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => {
-      savedJobsApi.delete(id);
-      return Promise.resolve();
-    },
+    mutationFn: (id: string) => savedJobsApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['savedJobs'] });
       toast.success('Job removed from saved');
     },
+    onError: () => {
+      toast.error('Failed to remove job');
+    },
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<SavedJob> }) => {
-      savedJobsApi.update(id, data);
-      return Promise.resolve();
-    },
+    mutationFn: ({ id, data }: { id: string; data: Partial<SavedJob> }) => 
+      savedJobsApi.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['savedJobs'] });
+    },
+    onError: () => {
+      toast.error('Failed to update job');
     },
   });
 
@@ -84,8 +85,11 @@ export default function SavedJobs() {
         applied: newApplied,
         applied_date: newApplied ? new Date().toISOString().split('T')[0] : undefined
       }
+    }, {
+      onSuccess: () => {
+        toast.success(newApplied ? 'Marked as applied!' : 'Unmarked as applied');
+      }
     });
-    toast.success(newApplied ? 'Marked as applied!' : 'Unmarked as applied');
   };
 
   const startEditingComment = (job: SavedJob) => {
@@ -94,13 +98,17 @@ export default function SavedJobs() {
   };
 
   const saveComment = (jobId: string) => {
-    updateMutation.mutate({
-      id: jobId,
-      data: { comments: commentText }
-    });
+    const text = commentText;
     setEditingComment(null);
     setCommentText('');
-    toast.success('Comment saved');
+    updateMutation.mutate({
+      id: jobId,
+      data: { comments: text }
+    }, {
+      onSuccess: () => {
+        toast.success('Comment saved');
+      }
+    });
   };
   
   return (
@@ -262,7 +270,8 @@ export default function SavedJobs() {
                           variant="ghost"
                           size="icon"
                           onClick={() => deleteMutation.mutate(job.id)}
-                          className="text-slate-400 hover:text-red-500 hover:bg-red-50"
+                          disabled={deleteMutation.isPending}
+                          className="text-slate-400 hover:text-red-500 hover:bg-red-50 disabled:opacity-50"
                         >
                           <BookmarkX className="w-5 h-5" />
                         </Button>
@@ -292,9 +301,10 @@ export default function SavedJobs() {
                             <Button
                               size="sm"
                               onClick={() => saveComment(job.id)}
-                              className="bg-indigo-600 hover:bg-indigo-700"
+                              disabled={updateMutation.isPending}
+                              className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50"
                             >
-                              Save
+                              {updateMutation.isPending ? 'Saving...' : 'Save'}
                             </Button>
                           </div>
                         </div>
@@ -323,7 +333,8 @@ export default function SavedJobs() {
                             variant="outline"
                             size="sm"
                             onClick={() => toggleApplied(job)}
-                            className={job.applied ? 'text-emerald-600 border-emerald-300 hover:bg-emerald-50' : ''}
+                            disabled={updateMutation.isPending}
+                            className={`${job.applied ? 'text-emerald-600 border-emerald-300 hover:bg-emerald-50' : ''} disabled:opacity-50`}
                           >
                             {job.applied ? (
                               <CheckCircle2 className="w-4 h-4 mr-1.5" />

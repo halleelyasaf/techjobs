@@ -37,30 +37,7 @@ router.get('/', async (req: Request, res: Response) => {
   }
 });
 
-// GET saved job by ID
-router.get('/:id', async (req: Request, res: Response) => {
-  try {
-    const userId = req.user!.id;
-    
-    const { data: job, error } = await supabase
-      .from('saved_jobs')
-      .select('*')
-      .eq('id', req.params.id)
-      .eq('user_id', userId)
-      .single();
-
-    if (error || !job) {
-      return res.status(404).json({ error: 'Job not found' });
-    }
-    
-    res.json(job as SavedJob);
-  } catch (error) {
-    console.error('Error fetching saved job:', error);
-    return res.status(500).json({ error: 'Failed to fetch saved job' });
-  }
-});
-
-// GET saved job by URL
+// GET saved job by URL (must be before /:id to avoid shadowing)
 router.get('/by-url/:url', async (req: Request, res: Response) => {
   try {
     const userId = req.user!.id;
@@ -73,13 +50,44 @@ router.get('/by-url/:url', async (req: Request, res: Response) => {
       .eq('user_id', userId)
       .single();
 
-    if (error || !job) {
-      return res.status(404).json({ error: 'Job not found' });
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return res.status(404).json({ error: 'Job not found' });
+      }
+      console.error('Error fetching saved job by URL:', error);
+      return res.status(500).json({ error: 'Failed to fetch saved job' });
     }
     
     res.json(job as SavedJob);
   } catch (error) {
     console.error('Error fetching saved job by URL:', error);
+    return res.status(500).json({ error: 'Failed to fetch saved job' });
+  }
+});
+
+// GET saved job by ID
+router.get('/:id', async (req: Request, res: Response) => {
+  try {
+    const userId = req.user!.id;
+    
+    const { data: job, error } = await supabase
+      .from('saved_jobs')
+      .select('*')
+      .eq('id', req.params.id)
+      .eq('user_id', userId)
+      .single();
+
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return res.status(404).json({ error: 'Job not found' });
+      }
+      console.error('Error fetching saved job:', error);
+      return res.status(500).json({ error: 'Failed to fetch saved job' });
+    }
+    
+    res.json(job as SavedJob);
+  } catch (error) {
+    console.error('Error fetching saved job:', error);
     return res.status(500).json({ error: 'Failed to fetch saved job' });
   }
 });

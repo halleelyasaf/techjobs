@@ -35,8 +35,12 @@ router.get('/by-name/:name', async (req: Request, res: Response) => {
       .eq('name', name)
       .single();
 
-    if (error || !company) {
-      return res.status(404).json({ error: 'Company not found' });
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return res.status(404).json({ error: 'Company not found' });
+      }
+      console.error('Error fetching company:', error);
+      return res.status(500).json({ error: 'Failed to fetch company' });
     }
     
     res.json(company as Company);
@@ -55,8 +59,12 @@ router.get('/:id', async (req: Request, res: Response) => {
       .eq('id', req.params.id)
       .single();
 
-    if (error || !company) {
-      return res.status(404).json({ error: 'Company not found' });
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return res.status(404).json({ error: 'Company not found' });
+      }
+      console.error('Error fetching company:', error);
+      return res.status(500).json({ error: 'Failed to fetch company' });
     }
     
     res.json(company as Company);
@@ -135,7 +143,15 @@ router.put('/:id', async (req: Request, res: Response) => {
       .eq('id', id)
       .single();
 
-    if (selectError || !existing) {
+    if (selectError) {
+      if (selectError.code === 'PGRST116') {
+        return res.status(404).json({ error: 'Company not found' });
+      }
+      console.error('Error checking company:', selectError);
+      return res.status(500).json({ error: 'Failed to check company' });
+    }
+
+    if (!existing) {
       return res.status(404).json({ error: 'Company not found' });
     }
 
@@ -271,7 +287,15 @@ router.delete('/:id', async (req: Request, res: Response) => {
       .eq('id', id)
       .single();
 
-    if (selectError || !existing) {
+    if (selectError) {
+      if (selectError.code === 'PGRST116') {
+        return res.status(404).json({ error: 'Company not found' });
+      }
+      console.error('Error checking company:', selectError);
+      return res.status(500).json({ error: 'Failed to check company' });
+    }
+
+    if (!existing) {
       return res.status(404).json({ error: 'Company not found' });
     }
 
