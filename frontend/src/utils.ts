@@ -6,8 +6,6 @@ const pageRoutes: Record<string, string> = {
   CompanyProfile: '/company',
   SavedJobs: '/saved',
   Map: '/map',
-  PrivacyPolicy: '/privacy',
-  TermsOfService: '/terms',
 };
 
 export function createPageUrl(pageName: string): string {
