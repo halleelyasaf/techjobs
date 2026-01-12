@@ -14,6 +14,8 @@ export interface User {
 export interface SavedJob {
   id: string;
   user_id: string;
+  user_name?: string | null;
+  user_email?: string | null;
   job_title: string;
   company: string;
   category?: string | null;

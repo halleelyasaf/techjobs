@@ -116,10 +116,13 @@ router.post('/', async (req: Request, res: Response) => {
 
     const id = uuidv4();
     const now = new Date().toISOString();
+    const user = req.user!;
 
     const insertData: Partial<SavedJob> & { id: string; user_id: string; job_title: string; company: string; url: string } = {
       id,
       user_id: userId,
+      user_name: user.name || null,
+      user_email: user.email || null,
       job_title,
       company,
       category: category || null,

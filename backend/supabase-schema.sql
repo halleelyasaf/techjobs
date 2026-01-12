@@ -16,6 +16,8 @@ CREATE TABLE IF NOT EXISTS users (
 CREATE TABLE IF NOT EXISTS saved_jobs (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  user_name TEXT,
+  user_email TEXT,
   job_title TEXT NOT NULL,
   company TEXT NOT NULL,
   category TEXT,
