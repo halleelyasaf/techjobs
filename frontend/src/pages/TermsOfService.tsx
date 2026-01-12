@@ -152,8 +152,8 @@ export default function TermsOfService() {
               <h2 className="text-2xl font-semibold text-slate-900 mb-4">14. Contact Us</h2>
               <p className="text-slate-600 leading-relaxed">
                 If you have any questions about these Terms of Service, please contact us at{" "}
-                <a href="mailto:legal@techmap.co.il" className="text-indigo-600 hover:text-indigo-700 underline">
-                  legal@techmap.co.il
+                <a href="mailto:techjobsil@googlegroups.com" className="text-indigo-600 hover:text-indigo-700 underline">
+                  techjobsil@googlegroups.com
                 </a>
               </p>
             </section>
