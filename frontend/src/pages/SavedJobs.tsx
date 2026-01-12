@@ -85,8 +85,11 @@ export default function SavedJobs() {
         applied: newApplied,
         applied_date: newApplied ? new Date().toISOString().split('T')[0] : undefined
       }
+    }, {
+      onSuccess: () => {
+        toast.success(newApplied ? 'Marked as applied!' : 'Unmarked as applied');
+      }
     });
-    toast.success(newApplied ? 'Marked as applied!' : 'Unmarked as applied');
   };
 
   const startEditingComment = (job: SavedJob) => {
@@ -95,13 +98,17 @@ export default function SavedJobs() {
   };
 
   const saveComment = (jobId: string) => {
-    updateMutation.mutate({
-      id: jobId,
-      data: { comments: commentText }
-    });
+    const text = commentText;
     setEditingComment(null);
     setCommentText('');
-    toast.success('Comment saved');
+    updateMutation.mutate({
+      id: jobId,
+      data: { comments: text }
+    }, {
+      onSuccess: () => {
+        toast.success('Comment saved');
+      }
+    });
   };
   
   return (
