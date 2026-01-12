@@ -268,7 +268,7 @@ router.put('/by-name/:name', async (req: Request, res: Response) => {
       return res.json(updatedCompany as Company);
     }
 
-    res.json(existing as Company);
+    return res.json(existing as Company);
   } catch (error) {
     console.error('Error upserting company:', error);
     return res.status(500).json({ error: 'Failed to upsert company' });
