@@ -18,22 +18,26 @@ declare global {
   }
 }
 
-// Track if AdSense script has been loaded globally
-let adsenseScriptLoaded = false;
+/**
+ * Check if AdSense script is already loaded by querying the DOM.
+ * This is more reliable than module-level state for HMR and SSR scenarios.
+ */
+function isAdsenseScriptLoaded(): boolean {
+  return !!document.querySelector('script[src*="adsbygoogle"]');
+}
 
 /**
  * Dynamically loads the AdSense script with the correct client ID.
  * This is called once globally when the first ad component mounts.
  */
 function loadAdsenseScript(): void {
-  if (adsenseScriptLoaded || !ADSENSE_CLIENT_ID) return;
+  if (isAdsenseScriptLoaded() || !ADSENSE_CLIENT_ID) return;
   
   const script = document.createElement('script');
   script.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT_ID}`;
   script.async = true;
   script.crossOrigin = 'anonymous';
   document.head.appendChild(script);
-  adsenseScriptLoaded = true;
 }
 
 export function GoogleAd({
@@ -46,6 +50,8 @@ export function GoogleAd({
   const isAdPushed = useRef(false);
 
   useEffect(() => {
+    let isMounted = true;
+
     // Skip if no client ID configured
     if (!ADSENSE_CLIENT_ID) {
       if (import.meta.env.DEV) {
@@ -74,12 +80,19 @@ export function GoogleAd({
     if (isAdPushed.current) return;
 
     try {
-      // Initialize adsbygoogle array if it doesn't exist
-      (window.adsbygoogle = window.adsbygoogle || []).push({});
-      isAdPushed.current = true;
+      if (isMounted) {
+        // Initialize adsbygoogle array if it doesn't exist
+        (window.adsbygoogle = window.adsbygoogle || []).push({});
+        isAdPushed.current = true;
+      }
     } catch (error) {
       console.error('Google AdSense error:', error);
     }
+
+    // Cleanup function to handle unmount before initialization completes
+    return () => {
+      isMounted = false;
+    };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // See comment above for why this is intentionally empty
 
@@ -91,7 +104,7 @@ export function GoogleAd({
           className={`google-ad-placeholder bg-neutral-50 border border-dashed border-neutral-200 flex items-center justify-center text-neutral-400 text-sm ${className}`} 
           style={{ minHeight: '90px', ...style }}
         >
-          <span className="opacity-60">💡 Set VITE_ADSENSE_CLIENT_ID to enable ads</span>
+          Set VITE_ADSENSE_CLIENT_ID to enable ads
         </div>
       );
     }
@@ -106,10 +119,12 @@ export function GoogleAd({
           className={`google-ad-placeholder bg-neutral-50 border border-dashed border-neutral-200 flex items-center justify-center text-neutral-400 text-sm ${className}`} 
           style={{ minHeight: '90px', ...style }}
         >
-          <span className="opacity-60">📍 Ad Placeholder - Configure slot ID</span>
+          Ad Placeholder - Configure slot ID
         </div>
       );
     }
+    // In production, warn and return null if slot IDs are not configured
+    console.warn('GoogleAd: Ad slot not configured. Set VITE_ADSENSE_SLOT_* environment variables.');
     return null;
   }
 
