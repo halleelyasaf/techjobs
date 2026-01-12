@@ -123,8 +123,8 @@ export function GoogleAd({
         </div>
       );
     }
-    // In production, warn and return null if slot IDs are not configured
-    console.warn('GoogleAd: Ad slot not configured. Set VITE_ADSENSE_SLOT_* environment variables.');
+    // In production, return null silently if slot IDs are not configured
+    // (warning would log on every render)
     return null;
   }
 
