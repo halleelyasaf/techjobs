@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import LayoutHeader from "@/components/LayoutHeader";
-import { BannerAd } from "@/components/GoogleAd";
+// import { BannerAd } from "@/components/GoogleAd"; // Uncomment when ready to show ads
 
 interface LayoutProps {
   children: ReactNode;
