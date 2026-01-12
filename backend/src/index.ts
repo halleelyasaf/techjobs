@@ -2,6 +2,8 @@ import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
 import session from 'express-session';
+import pgSession from 'connect-pg-simple';
+import { Pool } from 'pg';
 import passport from './config/passport';
 import authRouter from './routes/auth';
 import savedJobsRouter from './routes/savedJobs';
@@ -28,13 +30,28 @@ app.use(cors({
 // Body parser
 app.use(express.json());
 
-// Session configuration
-// TODO: Replace memory store with Redis or connect-pg-simple for production
-// Memory store will cause session loss on server restarts and doesn't scale across instances
-// Options: 
-//   - connect-redis (recommended for horizontal scaling)
-//   - connect-pg-simple (reuse existing Supabase PostgreSQL)
+// PostgreSQL session store using Supabase
+const PgStore = pgSession(session);
+
+// Build connection string from Supabase URL
+// Supabase URL format: https://PROJECT_ID.supabase.co
+// PostgreSQL format: postgresql://postgres.[PROJECT_ID]:[PASSWORD]@aws-0-[REGION].pooler.supabase.com:6543/postgres
+const supabaseUrl = process.env.SUPABASE_URL || '';
+const supabaseProjectId = supabaseUrl.replace('https://', '').replace('.supabase.co', '');
+
+const pool = new Pool({
+  connectionString: process.env.DATABASE_URL || 
+    `postgresql://postgres.${supabaseProjectId}:${process.env.SUPABASE_DB_PASSWORD}@aws-0-us-east-1.pooler.supabase.com:6543/postgres`,
+  ssl: process.env.NODE_ENV === 'production' ? { rejectUnauthorized: false } : false
+});
+
+// Session configuration with PostgreSQL persistence
 app.use(session({
+  store: new PgStore({
+    pool,
+    tableName: 'session',
+    createTableIfMissing: false, // We create it via supabase-schema.sql
+  }),
   secret: process.env.SESSION_SECRET || 'techjobs-dev-secret-change-in-production',
   resave: false,
   saveUninitialized: false,

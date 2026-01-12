@@ -47,6 +47,15 @@ CREATE TABLE IF NOT EXISTS companies (
   updated_date TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 
+-- Session table for connect-pg-simple (express-session persistence)
+CREATE TABLE IF NOT EXISTS "session" (
+  "sid" VARCHAR NOT NULL COLLATE "default",
+  "sess" JSON NOT NULL,
+  "expire" TIMESTAMP(6) NOT NULL,
+  PRIMARY KEY ("sid")
+);
+CREATE INDEX IF NOT EXISTS "IDX_session_expire" ON "session" ("expire");
+
 -- Indexes for better query performance
 -- Note: email and companies.name already have UNIQUE constraints which create indexes
 CREATE INDEX IF NOT EXISTS idx_users_google_id ON users(google_id);
@@ -79,6 +88,12 @@ CREATE POLICY "Anyone can read companies" ON companies
 
 -- Service role can manage companies
 CREATE POLICY "Service role can manage companies" ON companies
+  FOR ALL
+  USING (auth.role() = 'service_role');
+
+-- RLS Policies for session table
+ALTER TABLE "session" ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Service role can manage sessions" ON "session"
   FOR ALL
   USING (auth.role() = 'service_role');
 
