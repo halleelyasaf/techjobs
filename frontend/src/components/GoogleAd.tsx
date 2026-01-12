@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 
 // AdSense publisher ID from environment variable
 // Set VITE_ADSENSE_CLIENT_ID in your .env file (e.g., VITE_ADSENSE_CLIENT_ID=ca-pub-1234567890123456)
@@ -36,6 +36,13 @@ function isAdsenseScriptLoaded(): boolean {
 // Promise that resolves when AdSense script is ready
 let adsenseReadyPromise: Promise<void> | null = null;
 
+// Reset module state on HMR to prevent stale promises
+if (import.meta.hot) {
+  import.meta.hot.dispose(() => {
+    adsenseReadyPromise = null;
+  });
+}
+
 /**
  * Dynamically loads the AdSense script with the correct client ID.
  * Returns a promise that resolves when the script is loaded and ready.
@@ -64,7 +71,7 @@ function loadAdsenseScript(): Promise<void> {
     script.onerror = () => {
       // Reset promise so we can retry later
       adsenseReadyPromise = null;
-      reject(new Error('Failed to load AdSense script (possibly blocked by ad blocker)'));
+      reject(new Error('AD_BLOCKED'));
     };
     
     document.head.appendChild(script);
@@ -73,6 +80,26 @@ function loadAdsenseScript(): Promise<void> {
   return adsenseReadyPromise;
 }
 
+/**
+ * Google AdSense ad component.
+ * 
+ * @important If you need to change the adSlot after mount, use a key prop to force remount:
+ * ```tsx
+ * <GoogleAd key={adSlot} adSlot={adSlot} />
+ * ```
+ * 
+ * @example
+ * // Basic usage
+ * <GoogleAd adSlot="1234567890" />
+ * 
+ * // With custom format
+ * <GoogleAd adSlot="1234567890" adFormat="rectangle" />
+ * 
+ * // Using preset components (recommended)
+ * <BannerAd />
+ * <SidebarAd />
+ * <InFeedAd />
+ */
 export function GoogleAd({
   adSlot,
   adFormat = 'auto',
@@ -81,6 +108,7 @@ export function GoogleAd({
   style = {},
 }: GoogleAdProps) {
   const isAdPushed = useRef(false);
+  const [isBlocked, setIsBlocked] = useState(false);
 
   useEffect(() => {
     let isMounted = true;
@@ -104,7 +132,7 @@ export function GoogleAd({
     // Only push the ad once per component instance.
     // We intentionally use an empty dependency array because:
     // 1. AdSense ads should only be initialized once when the component mounts
-    // 2. Changing adSlot after mount would require a full remount anyway
+    // 2. Changing adSlot after mount would require a full remount (use key prop)
     // 3. The adsbygoogle.push() call is not idempotent - calling it multiple times
     //    can cause duplicate ads or errors
     if (isAdPushed.current) return;
@@ -122,9 +150,15 @@ export function GoogleAd({
         }
       })
       .catch((error) => {
+        if (!isMounted) return;
+        
         // Script failed to load (likely ad blocker)
+        if (error.message === 'AD_BLOCKED') {
+          setIsBlocked(true);
+        }
+        
         if (import.meta.env.DEV) {
-          console.warn('GoogleAd:', error.message);
+          console.warn('GoogleAd: Failed to load (ad blocker may be active)');
         }
       });
 
@@ -133,7 +167,7 @@ export function GoogleAd({
       isMounted = false;
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // See comment above for why this is intentionally empty
+  }, []); // See comment above - use key prop to change adSlot
 
   // Don't render if client ID is not configured
   if (!ADSENSE_CLIENT_ID) {
@@ -163,6 +197,12 @@ export function GoogleAd({
       );
     }
     return null;
+  }
+
+  // Graceful degradation for users with ad blockers
+  if (isBlocked) {
+    // Return empty container to maintain layout (CLS prevention)
+    return <div className={className} style={style} />;
   }
 
   return (
