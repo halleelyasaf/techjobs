@@ -14,8 +14,8 @@ export default function TermsOfService() {
           </Link>
         </Button>
 
-        <article className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 md:p-12">
-          <h1 className="text-4xl font-bold text-slate-900 mb-2">Terms of Service</h1>
+        <article aria-labelledby="terms-heading" className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 md:p-12">
+          <h1 id="terms-heading" className="text-4xl font-bold text-slate-900 mb-2">Terms of Service</h1>
           <p className="text-slate-500 mb-8">Last updated: January 2026</p>
 
           <div className="prose prose-slate max-w-none">

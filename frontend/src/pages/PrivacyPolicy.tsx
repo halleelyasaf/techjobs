@@ -14,10 +14,10 @@ export default function PrivacyPolicy() {
           </Link>
         </Button>
 
-        <article className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 md:p-12">
+        <article aria-labelledby="privacy-heading" className="bg-white rounded-2xl shadow-sm border border-slate-200 p-8 md:p-12">
           <div className="flex items-center gap-3 mb-2">
             <Shield className="w-10 h-10 text-indigo-600" />
-            <h1 className="text-4xl font-bold text-slate-900">Privacy Policy</h1>
+            <h1 id="privacy-heading" className="text-4xl font-bold text-slate-900">Privacy Policy</h1>
           </div>
           <p className="text-slate-500 mb-8">Last updated: January 2026</p>
 
