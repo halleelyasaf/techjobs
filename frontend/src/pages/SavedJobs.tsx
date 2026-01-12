@@ -56,23 +56,24 @@ export default function SavedJobs() {
   const appliedCount = savedJobs.filter(j => j.applied).length;
   
   const deleteMutation = useMutation({
-    mutationFn: (id: string) => {
-      savedJobsApi.delete(id);
-      return Promise.resolve();
-    },
+    mutationFn: (id: string) => savedJobsApi.delete(id),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['savedJobs'] });
       toast.success('Job removed from saved');
     },
+    onError: () => {
+      toast.error('Failed to remove job');
+    },
   });
 
   const updateMutation = useMutation({
-    mutationFn: ({ id, data }: { id: string; data: Partial<SavedJob> }) => {
-      savedJobsApi.update(id, data);
-      return Promise.resolve();
-    },
+    mutationFn: ({ id, data }: { id: string; data: Partial<SavedJob> }) => 
+      savedJobsApi.update(id, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['savedJobs'] });
+    },
+    onError: () => {
+      toast.error('Failed to update job');
     },
   });
 

@@ -35,7 +35,15 @@ router.get('/by-name/:name', async (req: Request, res: Response) => {
       .eq('name', name)
       .single();
 
-    if (error || !company) {
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return res.status(404).json({ error: 'Company not found' });
+      }
+      console.error('Error fetching company:', error);
+      return res.status(500).json({ error: 'Failed to fetch company' });
+    }
+
+    if (!company) {
       return res.status(404).json({ error: 'Company not found' });
     }
     
@@ -55,7 +63,15 @@ router.get('/:id', async (req: Request, res: Response) => {
       .eq('id', req.params.id)
       .single();
 
-    if (error || !company) {
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return res.status(404).json({ error: 'Company not found' });
+      }
+      console.error('Error fetching company:', error);
+      return res.status(500).json({ error: 'Failed to fetch company' });
+    }
+
+    if (!company) {
       return res.status(404).json({ error: 'Company not found' });
     }
     

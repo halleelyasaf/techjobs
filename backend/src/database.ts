@@ -3,10 +3,10 @@ import { createClient } from '@supabase/supabase-js';
 // Database types
 export interface User {
   id: string;
-  google_id: string;
+  google_id: string | null;
   email: string;
-  name: string;
-  picture: string;
+  name: string | null;
+  picture: string | null;
   created_date: string;
   updated_date: string;
 }
