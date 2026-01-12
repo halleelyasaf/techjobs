@@ -1,8 +1,8 @@
 import { useEffect, useRef } from 'react';
 
 // AdSense publisher ID from environment variable
-// Set VITE_ADSENSE_CLIENT_ID in your .env file
-const ADSENSE_CLIENT_ID = import.meta.env.VITE_ADSENSE_CLIENT_ID || 'ca-pub-4014589904472258';
+// Set VITE_ADSENSE_CLIENT_ID in your .env file (e.g., VITE_ADSENSE_CLIENT_ID=ca-pub-1234567890123456)
+const ADSENSE_CLIENT_ID = import.meta.env.VITE_ADSENSE_CLIENT_ID || '';
 
 interface GoogleAdProps {
   adSlot: string;
@@ -25,12 +25,19 @@ export default function GoogleAd({
   className = '',
   style = {},
 }: GoogleAdProps) {
-  const adRef = useRef<HTMLModElement>(null);
   const isAdPushed = useRef(false);
 
   useEffect(() => {
     // Only push the ad once
     if (isAdPushed.current) return;
+
+    // Don't initialize if client ID is not configured
+    if (!ADSENSE_CLIENT_ID) {
+      if (import.meta.env.DEV) {
+        console.warn('GoogleAd: VITE_ADSENSE_CLIENT_ID not configured');
+      }
+      return;
+    }
 
     // Warn in development if using placeholder slot
     if (import.meta.env.DEV && adSlot.includes('XXXXXXXXXX')) {
@@ -47,6 +54,18 @@ export default function GoogleAd({
     }
   }, [adSlot]);
 
+  // Don't render if client ID is not configured
+  if (!ADSENSE_CLIENT_ID) {
+    if (import.meta.env.DEV) {
+      return (
+        <div className={`google-ad-placeholder bg-red-50 border-2 border-dashed border-red-300 flex items-center justify-center text-red-500 ${className}`} style={{ minHeight: '90px', ...style }}>
+          AdSense not configured - Set VITE_ADSENSE_CLIENT_ID
+        </div>
+      );
+    }
+    return null;
+  }
+
   // Don't render placeholder ads in production
   if (adSlot.includes('XXXXXXXXXX')) {
     if (import.meta.env.DEV) {
@@ -62,9 +81,8 @@ export default function GoogleAd({
   return (
     <div className={`google-ad-container ${className}`} style={style}>
       <ins
-        ref={adRef}
         className="adsbygoogle"
-        style={{ display: 'block', ...style }}
+        style={{ display: 'block' }}
         data-ad-client={ADSENSE_CLIENT_ID}
         data-ad-slot={adSlot}
         data-ad-format={adFormat}
