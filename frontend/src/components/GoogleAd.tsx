@@ -18,7 +18,7 @@ declare global {
   }
 }
 
-export default function GoogleAd({
+export function GoogleAd({
   adSlot,
   adFormat = 'auto',
   fullWidthResponsive = true,
@@ -52,7 +52,8 @@ export default function GoogleAd({
     } catch (error) {
       console.error('Google AdSense error:', error);
     }
-  }, [adSlot]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run once on mount - adSlot changes don't require re-initialization
 
   // Don't render if client ID is not configured
   if (!ADSENSE_CLIENT_ID) {
@@ -126,7 +127,10 @@ export function InFeedAd({ className = '' }: { className?: string }) {
     <GoogleAd
       adSlot={AD_SLOTS.IN_FEED}
       adFormat="auto"
-      className={`w-full ${className}`}
+      className={`w-full min-h-[100px] ${className}`}
     />
   );
 }
+
+// Default export for backwards compatibility
+export default GoogleAd;
