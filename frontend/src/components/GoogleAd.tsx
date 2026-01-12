@@ -1,11 +1,8 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef } from 'react';
 
 // AdSense publisher ID from environment variable
 // Set VITE_ADSENSE_CLIENT_ID in your .env file (e.g., VITE_ADSENSE_CLIENT_ID=ca-pub-1234567890123456)
 const ADSENSE_CLIENT_ID = import.meta.env.VITE_ADSENSE_CLIENT_ID || '';
-
-// Check at module load time to avoid flash
-const IS_ADSENSE_CONFIGURED = Boolean(ADSENSE_CLIENT_ID);
 
 interface GoogleAdProps {
   adSlot: string;
@@ -21,6 +18,24 @@ declare global {
   }
 }
 
+// Track if AdSense script has been loaded globally
+let adsenseScriptLoaded = false;
+
+/**
+ * Dynamically loads the AdSense script with the correct client ID.
+ * This is called once globally when the first ad component mounts.
+ */
+function loadAdsenseScript(): void {
+  if (adsenseScriptLoaded || !ADSENSE_CLIENT_ID) return;
+  
+  const script = document.createElement('script');
+  script.src = `https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=${ADSENSE_CLIENT_ID}`;
+  script.async = true;
+  script.crossOrigin = 'anonymous';
+  document.head.appendChild(script);
+  adsenseScriptLoaded = true;
+}
+
 export function GoogleAd({
   adSlot,
   adFormat = 'auto',
@@ -29,9 +44,27 @@ export function GoogleAd({
   style = {},
 }: GoogleAdProps) {
   const isAdPushed = useRef(false);
-  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
+    // Skip if no client ID configured
+    if (!ADSENSE_CLIENT_ID) {
+      if (import.meta.env.DEV) {
+        console.warn('GoogleAd: VITE_ADSENSE_CLIENT_ID not configured');
+      }
+      return;
+    }
+
+    // Skip if using placeholder slot
+    if (adSlot.includes('XXXXXXXXXX')) {
+      if (import.meta.env.DEV) {
+        console.warn('GoogleAd: Using placeholder ad slot. Replace with actual slot ID before production.');
+      }
+      return;
+    }
+
+    // Load the AdSense script if not already loaded
+    loadAdsenseScript();
+
     // Only push the ad once per component instance.
     // We intentionally use an empty dependency array because:
     // 1. AdSense ads should only be initialized once when the component mounts
@@ -40,39 +73,18 @@ export function GoogleAd({
     //    can cause duplicate ads or errors
     if (isAdPushed.current) return;
 
-    // Don't initialize if client ID is not configured
-    if (!IS_ADSENSE_CONFIGURED) {
-      if (import.meta.env.DEV) {
-        console.warn('GoogleAd: VITE_ADSENSE_CLIENT_ID not configured');
-      }
-      setIsLoading(false);
-      return;
-    }
-
-    // Warn in development if using placeholder slot
-    if (import.meta.env.DEV && adSlot.includes('XXXXXXXXXX')) {
-      console.warn('GoogleAd: Using placeholder ad slot. Replace with actual slot ID before production.');
-      setIsLoading(false);
-      return;
-    }
-
     try {
       // Initialize adsbygoogle array if it doesn't exist
       (window.adsbygoogle = window.adsbygoogle || []).push({});
       isAdPushed.current = true;
-      // Ad loaded callback - AdSense doesn't provide a direct callback,
-      // so we use a timeout as a reasonable approximation
-      setTimeout(() => setIsLoading(false), 1000);
     } catch (error) {
       console.error('Google AdSense error:', error);
-      setIsLoading(false);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // See comment above for why this is intentionally empty
 
-  // Don't render if client ID is not configured (checked at build time)
-  if (!IS_ADSENSE_CONFIGURED) {
-    // In dev mode, show a subtle placeholder instead of jarring red
+  // Don't render if client ID is not configured
+  if (!ADSENSE_CLIENT_ID) {
     if (import.meta.env.DEV) {
       return (
         <div 
@@ -102,11 +114,7 @@ export function GoogleAd({
   }
 
   return (
-    <div className={`google-ad-container relative ${className}`} style={style}>
-      {/* Skeleton loading state */}
-      {isLoading && (
-        <div className="absolute inset-0 bg-neutral-100 animate-pulse rounded" />
-      )}
+    <div className={`google-ad-container ${className}`} style={style}>
       <ins
         className="adsbygoogle"
         style={{ display: 'block' }}
@@ -135,8 +143,7 @@ export function BannerAd({ className = '' }: { className?: string }) {
     <GoogleAd
       adSlot={AD_SLOTS.BANNER}
       adFormat="horizontal"
-      // 90px is the standard leaderboard height, but responsive ads may be taller
-      // Using aspect-ratio as fallback for better CLS handling
+      // 90px is the standard leaderboard height
       className={`w-full min-h-[90px] ${className}`}
       style={{ minHeight: '90px' }}
     />
