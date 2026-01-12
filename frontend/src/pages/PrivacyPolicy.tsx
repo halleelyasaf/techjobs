@@ -92,10 +92,10 @@ export default function PrivacyPolicy() {
               </p>
               <p className="mt-4">
                 <a 
-                  href="mailto:privacy@techmap.co.il" 
+                  href="mailto:techjobsil@googlegroups.com" 
                   className="text-lg font-semibold text-red-600 hover:text-red-700 underline"
                 >
-                  privacy@techmap.co.il
+                  techjobsil@googlegroups.com
                 </a>
               </p>
               <p className="text-slate-700 leading-relaxed mt-4">
@@ -220,10 +220,10 @@ export default function PrivacyPolicy() {
               </p>
               <p className="mt-4">
                 <a 
-                  href="mailto:privacy@techmap.co.il" 
+                  href="mailto:techjobsil@googlegroups.com" 
                   className="text-indigo-600 hover:text-indigo-700 underline font-medium"
                 >
-                  privacy@techmap.co.il
+                  techjobsil@googlegroups.com
                 </a>
               </p>
             </section>
