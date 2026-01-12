@@ -118,6 +118,7 @@ router.post('/', async (req: Request, res: Response) => {
     const now = new Date().toISOString();
     const user = req.user!;
 
+    // Store user_name and user_email for audit/history purposes (denormalized - won't update if user profile changes)
     const insertData: Partial<SavedJob> & { id: string; user_id: string; job_title: string; company: string; url: string } = {
       id,
       user_id: userId,
@@ -182,10 +183,6 @@ router.put('/:id', async (req: Request, res: Response) => {
       return res.status(500).json({ error: 'Failed to check saved job' });
     }
 
-    if (!existing) {
-      return res.status(404).json({ error: 'Job not found' });
-    }
-
     const allowedFields = ['job_title', 'company', 'category', 'city', 'url', 'level', 'size', 'job_category', 'applied', 'applied_date', 'comments'];
     const updateData: Partial<SavedJob> = {};
 
@@ -241,10 +238,6 @@ router.delete('/:id', async (req: Request, res: Response) => {
       }
       console.error('Error checking saved job:', selectError);
       return res.status(500).json({ error: 'Failed to check saved job' });
-    }
-
-    if (!existing) {
-      return res.status(404).json({ error: 'Job not found' });
     }
 
     const { error: deleteError } = await supabase

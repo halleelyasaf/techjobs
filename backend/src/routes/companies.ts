@@ -151,10 +151,6 @@ router.put('/:id', async (req: Request, res: Response) => {
       return res.status(500).json({ error: 'Failed to check company' });
     }
 
-    if (!existing) {
-      return res.status(404).json({ error: 'Company not found' });
-    }
-
     const allowedFields = ['name', 'description', 'website_url', 'logo_url', 'founded_year', 'headquarters', 'growth_summary', 'similar_companies'];
     const updateData: Partial<Company> = {};
 
@@ -293,10 +289,6 @@ router.delete('/:id', async (req: Request, res: Response) => {
       }
       console.error('Error checking company:', selectError);
       return res.status(500).json({ error: 'Failed to check company' });
-    }
-
-    if (!existing) {
-      return res.status(404).json({ error: 'Company not found' });
     }
 
     const { error: deleteError } = await supabase

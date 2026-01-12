@@ -68,7 +68,7 @@ const setupGoogleStrategy = () => {
         if (selectError && selectError.code !== 'PGRST116') {
           // PGRST116 = no rows returned, which is expected for new users
           console.error('Error checking existing user:', selectError);
-          return done(selectError as any, undefined);
+          return done(new Error(selectError.message), undefined);
         }
 
         let user: User;
