@@ -20,8 +20,12 @@ passport.deserializeUser(async (id: string, done) => {
       .single();
 
     if (error) {
-      console.error('Error deserializing user:', error);
-      return done(null, null);
+      // PGRST116 means user not found - treat as logged out, not error
+      if (error.code === 'PGRST116') {
+        return done(null, null);
+      }
+      console.error('Error deserializing user:', error.code, error.message);
+      return done(null, null); // Graceful degradation - user appears logged out
     }
 
     done(null, user as User);

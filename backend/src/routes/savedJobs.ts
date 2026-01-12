@@ -50,8 +50,12 @@ router.get('/by-url/:url', async (req: Request, res: Response) => {
       .eq('user_id', userId)
       .single();
 
-    if (error || !job) {
-      return res.status(404).json({ error: 'Job not found' });
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return res.status(404).json({ error: 'Job not found' });
+      }
+      console.error('Error fetching saved job by URL:', error);
+      return res.status(500).json({ error: 'Failed to fetch saved job' });
     }
     
     res.json(job as SavedJob);
@@ -73,8 +77,12 @@ router.get('/:id', async (req: Request, res: Response) => {
       .eq('user_id', userId)
       .single();
 
-    if (error || !job) {
-      return res.status(404).json({ error: 'Job not found' });
+    if (error) {
+      if (error.code === 'PGRST116') {
+        return res.status(404).json({ error: 'Job not found' });
+      }
+      console.error('Error fetching saved job:', error);
+      return res.status(500).json({ error: 'Failed to fetch saved job' });
     }
     
     res.json(job as SavedJob);

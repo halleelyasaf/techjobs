@@ -270,7 +270,8 @@ export default function SavedJobs() {
                           variant="ghost"
                           size="icon"
                           onClick={() => deleteMutation.mutate(job.id)}
-                          className="text-slate-400 hover:text-red-500 hover:bg-red-50"
+                          disabled={deleteMutation.isPending}
+                          className="text-slate-400 hover:text-red-500 hover:bg-red-50 disabled:opacity-50"
                         >
                           <BookmarkX className="w-5 h-5" />
                         </Button>
@@ -300,9 +301,10 @@ export default function SavedJobs() {
                             <Button
                               size="sm"
                               onClick={() => saveComment(job.id)}
-                              className="bg-indigo-600 hover:bg-indigo-700"
+                              disabled={updateMutation.isPending}
+                              className="bg-indigo-600 hover:bg-indigo-700 disabled:opacity-50"
                             >
-                              Save
+                              {updateMutation.isPending ? 'Saving...' : 'Save'}
                             </Button>
                           </div>
                         </div>
@@ -331,7 +333,8 @@ export default function SavedJobs() {
                             variant="outline"
                             size="sm"
                             onClick={() => toggleApplied(job)}
-                            className={job.applied ? 'text-emerald-600 border-emerald-300 hover:bg-emerald-50' : ''}
+                            disabled={updateMutation.isPending}
+                            className={`${job.applied ? 'text-emerald-600 border-emerald-300 hover:bg-emerald-50' : ''} disabled:opacity-50`}
                           >
                             {job.applied ? (
                               <CheckCircle2 className="w-4 h-4 mr-1.5" />
