@@ -38,12 +38,13 @@ router.get('/me', (req: Request, res: Response) => {
 
 // Initiate Google OAuth
 router.get('/google', (req: Request, res: Response, next: NextFunction) => {
-  // Store the redirect URL in session
+  // Store the redirect URL in OAuth state parameter (more reliable than session)
   const redirectUrl = req.query.redirect as string || process.env.FRONTEND_URL || 'http://localhost:8080';
-  (req.session as any).returnTo = redirectUrl;
+  const state = Buffer.from(JSON.stringify({ returnTo: redirectUrl })).toString('base64');
   
   passport.authenticate('google', {
-    scope: ['profile', 'email']
+    scope: ['profile', 'email'],
+    state
   })(req, res, next);
 });
 
@@ -53,9 +54,21 @@ router.get('/google/callback',
     failureRedirect: '/auth/failure'
   }),
   (req: Request, res: Response) => {
-    // Redirect to frontend after successful login
-    const returnTo = (req.session as any).returnTo || process.env.FRONTEND_URL || 'http://localhost:8080';
-    delete (req.session as any).returnTo;
+    // Get redirect URL from OAuth state parameter
+    let returnTo = process.env.FRONTEND_URL || 'http://localhost:8080';
+    
+    try {
+      const state = req.query.state as string;
+      if (state) {
+        const decoded = JSON.parse(Buffer.from(state, 'base64').toString());
+        if (decoded.returnTo) {
+          returnTo = decoded.returnTo;
+        }
+      }
+    } catch (e) {
+      console.error('Error decoding state:', e);
+    }
+    
     res.redirect(returnTo);
   }
 );
