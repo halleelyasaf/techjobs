@@ -578,47 +578,101 @@ interface SalaryData {
 // FETCH FROM EXTERNAL SOURCES
 // ============================================
 
-// Fetch salary from RapidAPI Glassdoor (if API key is configured)
+// Fetch salary from RapidAPI Real-Time Glassdoor Data
 async function fetchRapidAPIGlassdoor(company: string, jobTitle?: string): Promise<SalaryData | null> {
   const apiKey = process.env.RAPIDAPI_KEY;
   if (!apiKey) {
+    console.log('RAPIDAPI_KEY not configured, skipping Glassdoor fetch');
     return null;
   }
 
   try {
-    const response = await axios.get('https://glassdoor.p.rapidapi.com/salaries', {
+    const searchTitle = jobTitle || 'Software Engineer';
+    const response = await axios.get('https://real-time-glassdoor-data.p.rapidapi.com/salary-estimation', {
       params: {
-        company: company,
-        job_title: jobTitle,
+        job_title: searchTitle,
         location: 'Israel',
+        location_type: 'ANY',
+        years_of_experience: 'ALL',
+        domain: 'www.glassdoor.com',
       },
       headers: {
         'X-RapidAPI-Key': apiKey,
-        'X-RapidAPI-Host': 'glassdoor.p.rapidapi.com',
+        'X-RapidAPI-Host': 'real-time-glassdoor-data.p.rapidapi.com',
       },
-      timeout: 10000,
+      timeout: 15000,
     });
 
-    if (response.data && response.data.salary) {
-      return {
-        company_name: company,
-        company_name_normalized: normalize(company),
-        job_title: jobTitle || null,
-        job_title_normalized: jobTitle ? normalize(jobTitle) : null,
-        location: 'Israel',
-        min_salary: response.data.salary.min || 0,
-        max_salary: response.data.salary.max || 0,
-        median_salary: response.data.salary.median || 0,
-        currency: 'ILS',
-        salary_type: 'monthly',
-        sample_count: response.data.count || 0,
-        source: 'rapidapi_glassdoor',
-        source_url: null,
-        confidence: response.data.count >= 10 ? 'high' : response.data.count >= 3 ? 'medium' : 'low',
-      };
+    console.log(`Glassdoor API response for ${searchTitle}:`, JSON.stringify(response.data).substring(0, 200));
+
+    // Parse the response - structure may vary
+    const data = response.data;
+    
+    if (data) {
+      // Try to extract salary data from various possible response formats
+      let minSalary = 0;
+      let maxSalary = 0;
+      let medianSalary = 0;
+
+      // Format 1: Direct salary fields
+      if (data.min_salary || data.minSalary) {
+        minSalary = data.min_salary || data.minSalary || 0;
+        maxSalary = data.max_salary || data.maxSalary || 0;
+        medianSalary = data.median_salary || data.medianSalary || Math.round((minSalary + maxSalary) / 2);
+      }
+      
+      // Format 2: Nested salary object
+      if (data.salary) {
+        minSalary = data.salary.min || data.salary.minimum || 0;
+        maxSalary = data.salary.max || data.salary.maximum || 0;
+        medianSalary = data.salary.median || Math.round((minSalary + maxSalary) / 2);
+      }
+
+      // Format 3: Pay estimate format
+      if (data.payEstimate || data.pay_estimate) {
+        const pay = data.payEstimate || data.pay_estimate;
+        minSalary = pay.low || pay.min || 0;
+        maxSalary = pay.high || pay.max || 0;
+        medianSalary = pay.median || pay.average || Math.round((minSalary + maxSalary) / 2);
+      }
+
+      // Format 4: Salary range array
+      if (data.salaryRange && Array.isArray(data.salaryRange)) {
+        minSalary = data.salaryRange[0] || 0;
+        maxSalary = data.salaryRange[1] || data.salaryRange[0] || 0;
+        medianSalary = Math.round((minSalary + maxSalary) / 2);
+      }
+
+      // If salaries are in USD annual, convert to ILS monthly
+      // Glassdoor usually returns annual USD salaries
+      if (minSalary > 10000) { // Likely annual USD
+        const usdToIls = 3.7;
+        minSalary = Math.round((minSalary * usdToIls) / 12);
+        maxSalary = Math.round((maxSalary * usdToIls) / 12);
+        medianSalary = Math.round((medianSalary * usdToIls) / 12);
+      }
+
+      if (minSalary > 0 && maxSalary > 0) {
+        return {
+          company_name: company,
+          company_name_normalized: normalize(company),
+          job_title: jobTitle || searchTitle,
+          job_title_normalized: normalize(jobTitle || searchTitle),
+          location: 'Israel',
+          min_salary: minSalary,
+          max_salary: maxSalary,
+          median_salary: medianSalary,
+          currency: 'ILS',
+          salary_type: 'monthly',
+          sample_count: data.count || data.sample_size || 1,
+          source: 'glassdoor',
+          source_url: `https://www.glassdoor.com/Salaries/${encodeURIComponent(searchTitle)}-israel-salaries`,
+          confidence: 'high',
+        };
+      }
     }
   } catch (error) {
-    console.error(`RapidAPI Glassdoor failed for ${company}:`, error instanceof Error ? error.message : 'Unknown error');
+    console.error(`RapidAPI Glassdoor failed for ${company}/${jobTitle}:`, error instanceof Error ? error.message : 'Unknown error');
   }
 
   return null;
@@ -748,6 +802,62 @@ export async function populateIsraeliSalaryData(): Promise<void> {
   console.log('✅ Israeli salary data populated');
 }
 
+// Job titles to fetch from Glassdoor
+const GLASSDOOR_JOB_TITLES = [
+  'Software Engineer',
+  'Senior Software Engineer',
+  'Staff Software Engineer',
+  'Frontend Developer',
+  'Backend Developer',
+  'Full Stack Developer',
+  'DevOps Engineer',
+  'Data Scientist',
+  'Data Engineer',
+  'Product Manager',
+  'Engineering Manager',
+  'QA Engineer',
+  'Security Engineer',
+  'Machine Learning Engineer',
+  'iOS Developer',
+  'Android Developer',
+];
+
+// Fetch Glassdoor data for multiple job titles
+export async function fetchGlassdoorSalaries(): Promise<void> {
+  const apiKey = process.env.RAPIDAPI_KEY;
+  if (!apiKey) {
+    console.log('⚠️ RAPIDAPI_KEY not set - skipping Glassdoor fetch');
+    return;
+  }
+
+  console.log('🔄 Fetching salaries from Glassdoor API...');
+  let successCount = 0;
+  let failCount = 0;
+
+  for (const jobTitle of GLASSDOOR_JOB_TITLES) {
+    try {
+      const data = await fetchRapidAPIGlassdoor('', jobTitle);
+      
+      if (data && data.min_salary > 0) {
+        await storeSalaryData(data);
+        successCount++;
+        console.log(`✅ Glassdoor: ${jobTitle} - ₪${data.min_salary}-${data.max_salary}`);
+      } else {
+        failCount++;
+        console.log(`⚠️ Glassdoor: No data for ${jobTitle}`);
+      }
+    } catch (error) {
+      failCount++;
+      console.error(`❌ Glassdoor error for ${jobTitle}:`, error);
+    }
+    
+    // Rate limiting - 1 request per 2 seconds
+    await new Promise(resolve => setTimeout(resolve, 2000));
+  }
+
+  console.log(`✅ Glassdoor fetch complete: ${successCount} success, ${failCount} failed`);
+}
+
 // Main function to fetch and update salary data
 export async function fetchAllSalaryData(): Promise<void> {
   console.log('🔄 Starting salary data fetch...');
@@ -755,25 +865,8 @@ export async function fetchAllSalaryData(): Promise<void> {
   // First, ensure Israeli survey data is up to date
   await populateIsraeliSalaryData();
   
-  // Then try to fetch from external sources for top companies
-  const topCompanies = ['Google', 'Meta', 'Apple', 'Amazon', 'Microsoft', 'Wiz', 'Monday.com'];
-  
-  for (const company of topCompanies) {
-    // Try RapidAPI first
-    let data = await fetchRapidAPIGlassdoor(company);
-    
-    // Fallback to scraping
-    if (!data) {
-      data = await fetchGlassdoorScrape(company);
-    }
-    
-    if (data) {
-      await storeSalaryData(data);
-    }
-    
-    // Rate limiting
-    await new Promise(resolve => setTimeout(resolve, 2000));
-  }
+  // Then fetch from Glassdoor API
+  await fetchGlassdoorSalaries();
   
   // Aggregate user reports
   await aggregateUserReports();

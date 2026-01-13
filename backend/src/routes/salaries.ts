@@ -8,6 +8,7 @@ import {
   getPendingReportsCount,
   moderateSalaryReport,
   populateIsraeliSalaryData,
+  fetchGlassdoorSalaries,
   type SalaryReport
 } from '../services/salaryFetcher';
 
@@ -214,6 +215,30 @@ router.post('/populate-israeli', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Error populating Israeli salary data:', error);
     res.status(500).json({ error: 'Failed to populate Israeli salary data' });
+  }
+});
+
+// Fetch salaries from Glassdoor API (admin only)
+router.post('/fetch-glassdoor', async (req: Request, res: Response) => {
+  try {
+    const adminKey = req.headers['x-admin-key'];
+    if (adminKey !== process.env.ADMIN_KEY) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+
+    if (!process.env.RAPIDAPI_KEY) {
+      res.status(400).json({ error: 'RAPIDAPI_KEY not configured' });
+      return;
+    }
+
+    // Run fetch in background
+    fetchGlassdoorSalaries().catch(console.error);
+    
+    res.json({ message: 'Glassdoor salary fetch started in background' });
+  } catch (error) {
+    console.error('Error fetching Glassdoor salaries:', error);
+    res.status(500).json({ error: 'Failed to start Glassdoor fetch' });
   }
 });
 
