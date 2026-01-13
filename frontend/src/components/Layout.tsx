@@ -47,9 +47,7 @@ export default function Layout({ children, currentPageName }: LayoutProps) {
         {children}
       </main>
       {/* Bottom banner ad */}
-      <div className="max-w-7xl mx-auto px-4 py-2" role="complementary" aria-label="Advertisements">
-        <BannerAd />
-      </div>
+      <BannerAd />
     </div>
   );
 }

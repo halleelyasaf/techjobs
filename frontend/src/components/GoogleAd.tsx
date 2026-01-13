@@ -223,13 +223,23 @@ export function GoogleAd({
 // Heights are set to common AdSense ad unit sizes to minimize CLS
 
 export function BannerAd({ className = '' }: { className?: string }) {
+  // Don't render container if ads won't be shown (no client ID or placeholder slot in production)
+  const shouldHide = !ADSENSE_CLIENT_ID && !import.meta.env.DEV;
+  const isPlaceholder = AD_SLOTS.BANNER.includes('XXXXXXXXXX') && !import.meta.env.DEV;
+  
+  if (shouldHide || isPlaceholder) {
+    return null;
+  }
+
   return (
-    <GoogleAd
-      adSlot={AD_SLOTS.BANNER}
-      adFormat="horizontal"
-      className={`w-full ${className}`}
-      style={{ minHeight: '90px' }} // Standard leaderboard height
-    />
+    <div className={`max-w-7xl mx-auto px-4 py-2 ${className}`} role="complementary" aria-label="Advertisements">
+      <GoogleAd
+        adSlot={AD_SLOTS.BANNER}
+        adFormat="horizontal"
+        className="w-full"
+        style={{ minHeight: '90px' }} // Standard leaderboard height
+      />
+    </div>
   );
 }
 
