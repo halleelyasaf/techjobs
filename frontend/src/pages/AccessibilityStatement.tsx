@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight, Accessibility, Mail, MessageCircle, Languages } from "lucide-react";
 
 // Configuration: Update this date when the accessibility statement is reviewed
+// TODO: Remember to update these dates whenever accessibility features are modified
 const ACCESSIBILITY_STATEMENT_LAST_UPDATED = {
   en: "January 13, 2026",
   he: "13 בינואר 2026"
@@ -162,7 +163,7 @@ export default function AccessibilityStatement() {
       </div>
 
       {/* Content */}
-      <div className="max-w-4xl mx-auto px-4 py-12">
+      <main className="max-w-4xl mx-auto px-4 py-12">
         <div className="bg-white rounded-2xl shadow-lg p-6 md:p-10 space-y-8">
           
           {/* General Statement */}
@@ -291,7 +292,7 @@ export default function AccessibilityStatement() {
             </Link>
           </Button>
         </div>
-      </div>
+      </main>
     </div>
   );
 }

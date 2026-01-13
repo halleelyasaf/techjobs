@@ -29,8 +29,11 @@ export default function AccessibilityWidget() {
       try {
         const saved = localStorage.getItem('accessibility-settings');
         return saved ? JSON.parse(saved) : defaultSettings;
-      } catch {
+      } catch (e) {
         // If JSON is corrupted, return defaults
+        if (import.meta.env.DEV) {
+          console.warn('Failed to parse accessibility settings from localStorage:', e);
+        }
         return defaultSettings;
       }
     }
@@ -52,8 +55,11 @@ export default function AccessibilityWidget() {
     // Save to localStorage
     try {
       localStorage.setItem('accessibility-settings', JSON.stringify(settings));
-    } catch {
+    } catch (e) {
       // localStorage may be unavailable in private browsing or quota exceeded
+      if (import.meta.env.DEV) {
+        console.warn('Failed to save accessibility settings to localStorage:', e);
+      }
     }
   }, [settings]);
 
