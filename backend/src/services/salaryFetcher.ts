@@ -587,7 +587,10 @@ async function fetchRapidAPIGlassdoor(company: string, jobTitle?: string): Promi
   }
 
   try {
-    const searchTitle = jobTitle || 'Software Engineer';
+    const baseTitle = jobTitle || 'Software Engineer';
+    // Include company name in search for company-specific results
+    const searchTitle = company ? `${baseTitle} ${company}` : baseTitle;
+    
     const response = await axios.get('https://real-time-glassdoor-data.p.rapidapi.com/salary-estimation', {
       params: {
         job_title: searchTitle,
@@ -790,23 +793,60 @@ export async function populateIsraeliSalaryData(): Promise<void> {
 const GLASSDOOR_JOB_TITLES = [
   'Software Engineer',
   'Senior Software Engineer',
-  'Staff Software Engineer',
   'Frontend Developer',
   'Backend Developer',
   'Full Stack Developer',
   'DevOps Engineer',
   'Data Scientist',
-  'Data Engineer',
   'Product Manager',
-  'Engineering Manager',
   'QA Engineer',
-  'Security Engineer',
-  'Machine Learning Engineer',
-  'iOS Developer',
-  'Android Developer',
 ];
 
-// Fetch Glassdoor data for multiple job titles
+// Top companies to fetch Glassdoor data for
+const GLASSDOOR_COMPANIES = [
+  'Google',
+  'Microsoft',
+  'Meta',
+  'Amazon',
+  'Apple',
+  'Nvidia',
+  'Wix',
+  'Monday.com',
+  'Fiverr',
+  'Check Point',
+  'CyberArk',
+  'Palo Alto Networks',
+  'SentinelOne',
+  'Wiz',
+  'Snyk',
+  'JFrog',
+  'AppsFlyer',
+  'SimilarWeb',
+  'Gong',
+  'Mobileye',
+  'Intel',
+  'Oracle',
+  'Salesforce',
+  'Nice',
+  'Amdocs',
+  'Playtika',
+  'ironSource',
+  'Taboola',
+  'Outbrain',
+  'Payoneer',
+  'Rapyd',
+  'Tipalti',
+  'Riskified',
+  'Forter',
+  'Lightricks',
+  'HiBob',
+  'Papaya Global',
+  'Deel',
+  'Elbit Systems',
+  'Rafael',
+];
+
+// Fetch Glassdoor data for companies and job titles
 export async function fetchGlassdoorSalaries(): Promise<void> {
   const apiKey = process.env.RAPIDAPI_KEY;
   if (!apiKey) {
@@ -815,9 +855,14 @@ export async function fetchGlassdoorSalaries(): Promise<void> {
   }
 
   console.log('🔄 Fetching salaries from Glassdoor API...');
+  console.log(`   Companies: ${GLASSDOOR_COMPANIES.length}`);
+  console.log(`   Job titles: ${GLASSDOOR_JOB_TITLES.length}`);
+  
   let successCount = 0;
   let failCount = 0;
 
+  // First fetch general salaries (no specific company)
+  console.log('📊 Fetching general salary data...');
   for (const jobTitle of GLASSDOOR_JOB_TITLES) {
     try {
       const data = await fetchRapidAPIGlassdoor('', jobTitle);
@@ -825,18 +870,43 @@ export async function fetchGlassdoorSalaries(): Promise<void> {
       if (data && data.min_salary > 0) {
         await storeSalaryData(data);
         successCount++;
-        console.log(`✅ Glassdoor: ${jobTitle} - ₪${data.min_salary}-${data.max_salary}`);
+        console.log(`✅ General: ${jobTitle} - ₪${data.min_salary}-${data.max_salary}`);
       } else {
         failCount++;
-        console.log(`⚠️ Glassdoor: No data for ${jobTitle}`);
       }
     } catch (error) {
       failCount++;
-      console.error(`❌ Glassdoor error for ${jobTitle}:`, error);
     }
     
-    // Rate limiting - 1 request per 2 seconds
-    await new Promise(resolve => setTimeout(resolve, 2000));
+    // Rate limiting
+    await new Promise(resolve => setTimeout(resolve, 1500));
+  }
+
+  // Then fetch per-company salaries
+  console.log('🏢 Fetching company-specific salary data...');
+  for (const company of GLASSDOOR_COMPANIES) {
+    // Fetch main job title per company
+    try {
+      const data = await fetchRapidAPIGlassdoor(company, 'Software Engineer');
+      
+      if (data && data.min_salary > 0) {
+        // Override company name to the actual company
+        data.company_name = company;
+        data.company_name_normalized = normalize(company);
+        await storeSalaryData(data);
+        successCount++;
+        console.log(`✅ ${company}: ₪${data.min_salary}-${data.max_salary}`);
+      } else {
+        failCount++;
+        console.log(`⚠️ No Glassdoor data for ${company}`);
+      }
+    } catch (error) {
+      failCount++;
+      console.error(`❌ Error fetching ${company}:`, error);
+    }
+    
+    // Rate limiting - be gentle with the API
+    await new Promise(resolve => setTimeout(resolve, 1500));
   }
 
   console.log(`✅ Glassdoor fetch complete: ${successCount} success, ${failCount} failed`);
