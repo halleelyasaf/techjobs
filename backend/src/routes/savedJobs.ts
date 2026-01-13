@@ -5,6 +5,25 @@ import { requireAuth } from './auth';
 
 const router = Router();
 
+// Input validation helpers
+const isValidUUID = (str: string): boolean => {
+  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
+  return uuidRegex.test(str);
+};
+
+const isValidUrl = (str: string): boolean => {
+  try {
+    new URL(str);
+    return str.length <= 2048; // Max URL length
+  } catch {
+    return false;
+  }
+};
+
+const sanitizeString = (str: string, maxLength: number = 500): string => {
+  return str.slice(0, maxLength).trim();
+};
+
 // All saved jobs routes require authentication
 router.use(requireAuth);
 
@@ -69,6 +88,12 @@ router.get('/by-url/:url', async (req: Request, res: Response) => {
 router.get('/:id', async (req: Request, res: Response) => {
   try {
     const userId = req.user!.id;
+    const { id } = req.params;
+
+    // Validate UUID format
+    if (!isValidUUID(id)) {
+      return res.status(400).json({ error: 'Invalid job ID format' });
+    }
     
     const { data: job, error } = await supabase
       .from('saved_jobs')
@@ -112,6 +137,11 @@ router.post('/', async (req: Request, res: Response) => {
 
     if (!job_title || !company || !url) {
       return res.status(400).json({ error: 'job_title, company, and url are required' });
+    }
+
+    // Validate URL format
+    if (!isValidUrl(url)) {
+      return res.status(400).json({ error: 'Invalid URL format' });
     }
 
     const id = uuidv4();
@@ -166,6 +196,11 @@ router.put('/:id', async (req: Request, res: Response) => {
     const userId = req.user!.id;
     const { id } = req.params;
     const updates = req.body;
+
+    // Validate UUID format
+    if (!isValidUUID(id)) {
+      return res.status(400).json({ error: 'Invalid job ID format' });
+    }
     
     // Check if job exists and belongs to user
     const { data: existing, error: selectError } = await supabase
@@ -223,6 +258,11 @@ router.delete('/:id', async (req: Request, res: Response) => {
   try {
     const userId = req.user!.id;
     const { id } = req.params;
+
+    // Validate UUID format
+    if (!isValidUUID(id)) {
+      return res.status(400).json({ error: 'Invalid job ID format' });
+    }
     
     // Check if job exists and belongs to user
     const { data: existing, error: selectError } = await supabase
