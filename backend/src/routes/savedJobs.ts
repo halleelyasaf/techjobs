@@ -2,27 +2,9 @@ import { Router, Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import supabase, { SavedJob } from '../database';
 import { requireAuth } from './auth';
+import { isValidUUID, isValidUrl } from '../utils/validation';
 
 const router = Router();
-
-// Input validation helpers
-const isValidUUID = (str: string): boolean => {
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-  return uuidRegex.test(str);
-};
-
-const isValidUrl = (str: string): boolean => {
-  try {
-    new URL(str);
-    return str.length <= 2048; // Max URL length
-  } catch {
-    return false;
-  }
-};
-
-const sanitizeString = (str: string, maxLength: number = 500): string => {
-  return str.slice(0, maxLength).trim();
-};
 
 // All saved jobs routes require authentication
 router.use(requireAuth);

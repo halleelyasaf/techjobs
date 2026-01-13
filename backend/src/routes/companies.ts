@@ -2,18 +2,9 @@ import { Router, Request, Response } from 'express';
 import { v4 as uuidv4 } from 'uuid';
 import supabase, { Company } from '../database';
 import { requireAuth } from './auth';
+import { isValidUUID, isValidName } from '../utils/validation';
 
 const router = Router();
-
-// Input validation helpers
-const isValidUUID = (str: string): boolean => {
-  const uuidRegex = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
-  return uuidRegex.test(str);
-};
-
-const sanitizeString = (str: string, maxLength: number = 500): string => {
-  return str.slice(0, maxLength).trim();
-};
 
 // GET all companies
 router.get('/', async (req: Request, res: Response) => {
@@ -213,6 +204,11 @@ router.put('/by-name/:name', requireAuth, async (req: Request, res: Response) =>
   try {
     const name = decodeURIComponent(req.params.name as string);
     const updates = req.body;
+
+    // Validate company name
+    if (!isValidName(name)) {
+      return res.status(400).json({ error: 'Invalid company name' });
+    }
     
     // Check if company exists
     const { data: existing, error: selectError } = await supabase
