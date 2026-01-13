@@ -1,3 +1,9 @@
+/**
+ * @fileoverview AccessibilityWidget component provides accessibility controls
+ * for users to customize their viewing experience including text size,
+ * contrast, link highlighting, and cursor size.
+ */
+
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { createPageUrl } from '@/utils';
@@ -6,6 +12,14 @@ import { Accessibility, X, ZoomIn, ZoomOut, Contrast, MousePointer2, Minus, Link
 import { motion, AnimatePresence } from 'framer-motion';
 import { useDialogAccessibility } from '@/hooks/useDialogAccessibility';
 
+/**
+ * Interface defining the accessibility settings that can be customized by users.
+ * @interface AccessibilitySettings
+ * @property {number} fontSize - The font size percentage (80-150%)
+ * @property {boolean} highContrast - Whether high contrast mode is enabled
+ * @property {boolean} highlightLinks - Whether links should be highlighted
+ * @property {boolean} bigCursor - Whether to use a larger cursor
+ */
 interface AccessibilitySettings {
   fontSize: number;
   highContrast: boolean;
@@ -13,6 +27,11 @@ interface AccessibilitySettings {
   bigCursor: boolean;
 }
 
+/**
+ * Default accessibility settings used when no saved settings exist
+ * or when the user resets to defaults.
+ * @constant {AccessibilitySettings}
+ */
 const defaultSettings: AccessibilitySettings = {
   fontSize: 100,
   highContrast: false,
@@ -20,6 +39,19 @@ const defaultSettings: AccessibilitySettings = {
   bigCursor: false,
 };
 
+/**
+ * AccessibilityWidget component that provides a floating accessibility panel
+ * allowing users to adjust text size, toggle high contrast mode,
+ * highlight links, and enable a larger cursor.
+ * 
+ * Settings are persisted to localStorage and applied to the document root.
+ * The widget is positioned at the bottom-right corner of the screen.
+ * 
+ * @returns {JSX.Element} The accessibility widget with toggle button and settings panel
+ * @example
+ * // Usage in a layout component:
+ * <AccessibilityWidget />
+ */
 export default function AccessibilityWidget() {
   const [isOpen, setIsOpen] = useState(false);
   
@@ -67,6 +99,10 @@ export default function AccessibilityWidget() {
     }
   }, [settings]);
 
+  /**
+   * Increases the font size by 10%, up to a maximum of 150%.
+   * @returns {void}
+   */
   const increaseFontSize = () => {
     setSettings(prev => ({
       ...prev,
@@ -74,6 +110,10 @@ export default function AccessibilityWidget() {
     }));
   };
 
+  /**
+   * Decreases the font size by 10%, down to a minimum of 80%.
+   * @returns {void}
+   */
   const decreaseFontSize = () => {
     setSettings(prev => ({
       ...prev,
@@ -81,18 +121,34 @@ export default function AccessibilityWidget() {
     }));
   };
 
+  /**
+   * Resets all accessibility settings to their default values.
+   * @returns {void}
+   */
   const resetSettings = () => {
     setSettings(defaultSettings);
   };
 
+  /**
+   * Toggles the high contrast mode on or off.
+   * @returns {void}
+   */
   const toggleHighContrast = () => {
     setSettings(prev => ({ ...prev, highContrast: !prev.highContrast }));
   };
 
+  /**
+   * Toggles the highlight links feature on or off.
+   * @returns {void}
+   */
   const toggleHighlightLinks = () => {
     setSettings(prev => ({ ...prev, highlightLinks: !prev.highlightLinks }));
   };
 
+  /**
+   * Toggles the big cursor feature on or off.
+   * @returns {void}
+   */
   const toggleBigCursor = () => {
     setSettings(prev => ({ ...prev, bigCursor: !prev.bigCursor }));
   };
@@ -103,7 +159,7 @@ export default function AccessibilityWidget() {
       <Button
         ref={triggerRef}
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-4 left-4 z-50 w-14 h-14 rounded-full bg-iris-600 hover:bg-iris-700 text-white shadow-lg"
+        className="fixed bottom-4 right-4 z-50 w-14 h-14 rounded-full bg-iris-600 hover:bg-iris-700 text-white shadow-lg"
         aria-label={isOpen ? 'Close accessibility menu' : 'Open accessibility menu'}
         aria-expanded={isOpen}
         aria-controls="accessibility-panel"
@@ -133,7 +189,7 @@ export default function AccessibilityWidget() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 20, scale: 0.95 }}
               transition={{ duration: 0.2 }}
-              className="fixed bottom-20 left-4 z-[101] w-80 max-w-[calc(100vw-2rem)] bg-white rounded-2xl shadow-2xl border border-warm-200"
+              className="fixed bottom-20 right-4 z-[101] w-80 max-w-[calc(100vw-2rem)] bg-white rounded-2xl shadow-2xl border border-warm-200"
               role="dialog"
               aria-modal="true"
               aria-label="Accessibility settings"
