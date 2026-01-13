@@ -1,13 +1,18 @@
 import 'dotenv/config';
 import express from 'express';
 import cors from 'cors';
+import helmet from 'helmet';
+import rateLimit from 'express-rate-limit';
 import session from 'express-session';
 import pgSession from 'connect-pg-simple';
 import { Pool } from 'pg';
+import cron from 'node-cron';
 import passport from './config/passport';
 import authRouter from './routes/auth';
 import savedJobsRouter from './routes/savedJobs';
 import companiesRouter from './routes/companies';
+import salariesRouter from './routes/salaries';
+import { fetchAllSalaryData } from './services/salaryFetcher';
 import path from 'path';
 
 const app = express();
@@ -28,6 +33,21 @@ if (process.env.NODE_ENV === 'production') {
   app.set('trust proxy', 1);
 }
 
+// Security headers with Helmet
+app.use(helmet({
+  contentSecurityPolicy: process.env.NODE_ENV === 'production' ? {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", "'unsafe-inline'", "https://accounts.google.com", "https://pagead2.googlesyndication.com", "https://www.googletagservices.com", "https://*.posthog.com"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", "data:", "https:"],
+      connectSrc: ["'self'", "https://accounts.google.com", "https://raw.githubusercontent.com", "https://*.posthog.com"],
+      frameSrc: ["https://accounts.google.com", "https://googleads.g.doubleclick.net", "https://tpc.googlesyndication.com"],
+    }
+  } : false,  // Disable in development for easier debugging
+  crossOriginEmbedderPolicy: false, // Allow embedding of Google OAuth
+}));
+
 // CORS configuration
 const corsOrigin = process.env.CORS_ORIGIN || 'http://localhost:5173';
 app.use(cors({
@@ -37,8 +57,32 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 
-// Body parser
-app.use(express.json());
+// Rate limiting to prevent abuse
+const limiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 100, // Limit each IP to 100 requests per windowMs
+  message: { error: 'Too many requests, please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  // Skip rate limiting in test environment
+  skip: () => process.env.NODE_ENV === 'test'
+});
+
+// Apply rate limiter to all routes
+app.use(limiter);
+
+// Stricter rate limit for auth routes (prevent brute force)
+const authLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000, // 15 minutes
+  max: 20, // Limit each IP to 20 auth requests per 15 minutes
+  message: { error: 'Too many authentication attempts, please try again later.' },
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: () => process.env.NODE_ENV === 'test'
+});
+
+// Body parser with size limits to prevent large payload attacks
+app.use(express.json({ limit: '10kb' }));
 
 // PostgreSQL session store using Supabase
 const PgStore = pgSession(session);
@@ -87,12 +131,13 @@ app.get('/health', (req, res) => {
   res.json({ status: 'ok', timestamp: new Date().toISOString() });
 });
 
-// Auth routes
-app.use('/auth', authRouter);
+// Auth routes (with stricter rate limiting)
+app.use('/auth', authLimiter, authRouter);
 
 // API routes
 app.use('/api/saved-jobs', savedJobsRouter);
 app.use('/api/companies', companiesRouter);
+app.use('/api/salaries', salariesRouter);
 
 // Serve frontend in production
 const publicPath = path.join(__dirname, '..', 'public');
@@ -101,7 +146,14 @@ if (process.env.NODE_ENV === 'production') {
   app.use(express.static(publicPath));
   
   // SPA fallback - serve index.html for all non-API routes
-  app.get('*', (req, res) => {
+  // Only serve index.html for routes (not files with extensions)
+  app.use((req, res) => {
+    // If the request has a file extension, it's a static file that wasn't found
+    if (path.extname(req.path)) {
+      res.status(404).send('Not found');
+      return;
+    }
+    // Otherwise, serve index.html for client-side routing
     res.sendFile(path.join(publicPath, 'index.html'));
   });
 } else {
@@ -112,7 +164,7 @@ if (process.env.NODE_ENV === 'production') {
 }
 
 // Error handler
-app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
+app.use((err: Error, _req: express.Request, res: express.Response, _next: express.NextFunction) => {
   console.error('Unhandled error:', err);
   res.status(500).json({ error: 'Internal server error' });
 });
@@ -123,12 +175,29 @@ app.listen(PORT, () => {
   console.log(`   Auth:         http://localhost:${PORT}/auth/me`);
   console.log(`   Saved Jobs:   http://localhost:${PORT}/api/saved-jobs`);
   console.log(`   Companies:    http://localhost:${PORT}/api/companies`);
+  console.log(`   Salaries:     http://localhost:${PORT}/api/salaries`);
   console.log('');
   if (!process.env.GOOGLE_CLIENT_ID) {
     console.log('⚠️  Google OAuth not configured. Set these environment variables:');
     console.log('   GOOGLE_CLIENT_ID=your-client-id');
     console.log('   GOOGLE_CLIENT_SECRET=your-client-secret');
   }
+
+  // Schedule daily salary data fetch at 3:00 AM Israel time
+  // Cron format: minute hour day-of-month month day-of-week
+  cron.schedule('0 3 * * *', async () => {
+    console.log('🔄 Starting scheduled salary data fetch...');
+    try {
+      await fetchAllSalaryData();
+      console.log('✅ Scheduled salary data fetch completed');
+    } catch (error) {
+      console.error('❌ Scheduled salary data fetch failed:', error);
+    }
+  }, {
+    timezone: 'Asia/Jerusalem'
+  });
+
+  console.log('⏰ Salary data fetch scheduled daily at 3:00 AM Israel time');
 });
 
 export default app;

@@ -1,11 +1,14 @@
+import { useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { MapPin, Users, Bookmark, BookmarkCheck, ExternalLink, CheckCircle2 } from "lucide-react";
+import { MapPin, Users, Bookmark, BookmarkCheck, ExternalLink, CheckCircle2, Banknote, MessageSquarePlus } from "lucide-react";
 import { motion } from "framer-motion";
 import { usePostHog } from 'posthog-js/react';
 import CompanyLogo from "@/components/CompanyLogo";
 import type { Job } from "./jobsData";
+import { estimateSalary, formatSalaryRange, generateGlassdoorUrl, hasCompanyData, getCompanyTier } from "./salaryEstimate";
+import SalaryReportModal from "@/components/SalaryReportModal";
 
 const sizeLabels: Record<string, string> = {
   'xs': '1-10',
@@ -33,6 +36,11 @@ interface JobCardProps {
 
 export default function JobCard({ job, onSave, isSaved, onApply, isApplied, index = 0 }: JobCardProps) {
   const posthog = usePostHog();
+  const [showSalaryModal, setShowSalaryModal] = useState(false);
+  const salaryEstimate = estimateSalary(job);
+  const glassdoorUrl = generateGlassdoorUrl(job);
+  const hasCompanySpecificData = hasCompanyData(job.company);
+  const companyTier = getCompanyTier(job.company);
 
   const handleApplyClick = () => {
     posthog.capture('job_apply_clicked', {
@@ -51,12 +59,16 @@ export default function JobCard({ job, onSave, isSaved, onApply, isApplied, inde
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: index * 0.05 }}
     >
-      <Card className="group bg-white hover:shadow-xl transition-all duration-300 border border-warm-100 hover:border-warm-200 overflow-hidden rounded-xl card-hover">
+      <Card 
+        role="article"
+        aria-label={`${job.title} at ${job.company}`}
+        className="group bg-white hover:shadow-xl transition-all duration-300 border border-warm-100 hover:border-warm-200 overflow-hidden rounded-xl card-hover"
+      >
         <CardContent className="p-6">
           <div className="flex justify-between items-start gap-4">
             <div className="flex-1 min-w-0">
               <div className="flex items-start gap-4">
-                <CompanyLogo name={job.company} className="w-12 h-12 hidden sm:flex" />
+                <CompanyLogo name={job.company} className="w-12 h-12 hidden sm:flex" aria-hidden="true" />
                 <div className="flex-1 min-w-0">
                   <div className="flex items-center gap-2 mb-2 flex-wrap">
                     <Badge
@@ -70,7 +82,7 @@ export default function JobCard({ job, onSave, isSaved, onApply, isApplied, inde
                     </Badge>
                     {isSaved && (
                       <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-emerald-200 gap-1 pl-1.5">
-                        <BookmarkCheck className="w-3 h-3" />
+                        <BookmarkCheck className="w-3 h-3" aria-hidden="true" />
                         Saved
                       </Badge>
                     )}
@@ -90,44 +102,83 @@ export default function JobCard({ job, onSave, isSaved, onApply, isApplied, inde
 
               <div className="flex flex-wrap items-center gap-4 text-sm text-warm-500">
                 <div className="flex items-center gap-1.5">
-                  <MapPin className="w-4 h-4 text-warm-400" />
-                  <span>{job.city}</span>
+                  <MapPin className="w-4 h-4 text-warm-400" aria-hidden="true" />
+                  <span aria-label={`Location: ${job.city}`}>{job.city}</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <Users className="w-4 h-4 text-warm-400" />
-                  <span>{sizeLabels[job.size] || job.size} employees</span>
+                  <Users className="w-4 h-4 text-warm-400" aria-hidden="true" />
+                  <span aria-label={`Company size: ${sizeLabels[job.size] || job.size} employees`}>{sizeLabels[job.size] || job.size} employees</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <a
+                    href={glassdoorUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`flex items-center gap-1.5 transition-colors group/salary ${
+                      hasCompanySpecificData 
+                        ? 'text-emerald-600 hover:text-emerald-700' 
+                        : 'text-warm-500 hover:text-emerald-600'
+                    }`}
+                    aria-label={`Estimated salary: ${formatSalaryRange(salaryEstimate)}${hasCompanySpecificData ? ' (based on company data)' : ''} - Click to view on Glassdoor`}
+                    title={hasCompanySpecificData 
+                      ? `הערכת שכר מבוססת נתוני חברה (${companyTier === 'top' ? 'שכר גבוה מאוד' : companyTier === 'high' ? 'שכר גבוה' : companyTier === 'mid' ? 'שכר ממוצע-גבוה' : 'שכר ממוצע'}) - לחץ לצפייה ב-Glassdoor`
+                      : 'הערכת שכר כללית - לחץ לצפייה ב-Glassdoor'
+                    }
+                  >
+                    <Banknote className="w-4 h-4" aria-hidden="true" />
+                    <span className="font-medium">{formatSalaryRange(salaryEstimate)}</span>
+                    {hasCompanySpecificData && (
+                      <span className={`text-xs px-1.5 py-0.5 rounded-full ${
+                        companyTier === 'top' ? 'bg-amber-100 text-amber-700' :
+                        companyTier === 'high' ? 'bg-emerald-100 text-emerald-700' :
+                        'bg-blue-100 text-blue-700'
+                      }`}>
+                        {companyTier === 'top' ? '💰 Top Pay' : companyTier === 'high' ? '📈 High Pay' : '✓ Verified'}
+                      </span>
+                    )}
+                  </a>
+                  <button
+                    onClick={() => setShowSalaryModal(true)}
+                    className="text-xs text-warm-400 hover:text-iris-600 transition-colors flex items-center gap-0.5"
+                    title="דווח על השכר שלך"
+                  >
+                    <MessageSquarePlus className="w-3 h-3" />
+                    <span className="hidden sm:inline">דווח</span>
+                  </button>
                 </div>
               </div>
             </div>
 
-            <div className="flex flex-col gap-2">
+            <div className="flex flex-col gap-2" role="group" aria-label="Job actions">
               <Button
                 variant="ghost"
                 size="icon"
                 onClick={() => onSave(job)}
-                aria-label={isSaved ? "Remove from saved jobs" : "Save job"}
+                aria-label={isSaved ? `Remove ${job.title} from saved jobs` : `Save ${job.title}`}
+                aria-pressed={isSaved}
                 className={`rounded-full ${isSaved ? 'text-iris-600 bg-iris-50' : 'text-warm-400 hover:text-iris-600'}`}
               >
-                {isSaved ? <BookmarkCheck className="w-5 h-5" /> : <Bookmark className="w-5 h-5" />}
+                {isSaved ? <BookmarkCheck className="w-5 h-5" aria-hidden="true" /> : <Bookmark className="w-5 h-5" aria-hidden="true" />}
               </Button>
               {onApply && (
                 <Button
                   variant="ghost"
                   size="icon"
                   onClick={() => onApply(job)}
-                  aria-label={isApplied ? "Unmark as applied" : "Mark as applied"}
+                  aria-label={isApplied ? `Unmark ${job.title} as applied` : `Mark ${job.title} as applied`}
+                  aria-pressed={isApplied}
                   className={`rounded-full ${isApplied ? 'text-emerald-600 bg-emerald-50' : 'text-warm-400 hover:text-emerald-600'}`}
                 >
-                  <CheckCircle2 className="w-5 h-5" />
+                  <CheckCircle2 className="w-5 h-5" aria-hidden="true" />
                 </Button>
               )}
             </div>
           </div>
 
           <div className="mt-4 pt-4 border-t border-warm-100 flex justify-between items-center">
-            <span className="text-xs text-warm-400">
+            <time className="text-xs text-warm-400" dateTime={job.updated}>
               Updated: {new Date(job.updated).toLocaleDateString('en-US')}
-            </span>
+            </time>
             <div className="flex items-center gap-2">
               <Button
                 asChild
@@ -135,15 +186,28 @@ export default function JobCard({ job, onSave, isSaved, onApply, isApplied, inde
                 className="bg-copper-500 hover:bg-copper-600 text-white gap-2 rounded-lg"
                 onClick={handleApplyClick}
               >
-                <a href={job.url} target="_blank" rel="noopener noreferrer">
+                <a 
+                  href={job.url} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  aria-label={`Apply to ${job.title} at ${job.company} (opens in new window)`}
+                >
                   Apply Now
-                  <ExternalLink className="w-4 h-4" />
+                  <ExternalLink className="w-4 h-4" aria-hidden="true" />
                 </a>
               </Button>
             </div>
           </div>
         </CardContent>
       </Card>
+
+      {/* Salary Report Modal */}
+      <SalaryReportModal
+        isOpen={showSalaryModal}
+        onClose={() => setShowSalaryModal(false)}
+        prefillCompany={job.company}
+        prefillTitle={job.title}
+      />
     </motion.div>
   );
 }
