@@ -165,6 +165,21 @@ router.post('/report', async (req: Request, res: Response) => {
 // ADMIN ENDPOINTS
 // ============================================
 
+// Debug endpoint to check if ADMIN_KEY is configured
+router.get('/admin/check', async (req: Request, res: Response) => {
+  const adminKey = req.headers['x-admin-key'];
+  const envKeySet = !!process.env.ADMIN_KEY;
+  const envKeyLength = process.env.ADMIN_KEY?.length || 0;
+  const headerKeyLength = typeof adminKey === 'string' ? adminKey.length : 0;
+  
+  res.json({
+    admin_key_configured: envKeySet,
+    env_key_length: envKeyLength,
+    header_key_length: headerKeyLength,
+    keys_match: adminKey === process.env.ADMIN_KEY,
+  });
+});
+
 // Manual trigger to refresh salary data (admin only)
 router.post('/refresh', async (req: Request, res: Response) => {
   try {
