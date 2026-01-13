@@ -120,7 +120,7 @@ export default function AccessibilityWidget() {
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               exit={{ opacity: 0 }}
-              className="fixed inset-0 bg-black/30 z-[99] md:hidden"
+              className="fixed inset-0 bg-black/30 z-[100] md:hidden"
               onClick={closeAndReturnFocus}
               aria-hidden="true"
             />
@@ -133,7 +133,7 @@ export default function AccessibilityWidget() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 20, scale: 0.95 }}
               transition={{ duration: 0.2 }}
-              className="fixed bottom-20 left-4 z-50 w-80 max-w-[calc(100vw-2rem)] bg-white rounded-2xl shadow-2xl border border-warm-200"
+              className="fixed bottom-20 left-4 z-[101] w-80 max-w-[calc(100vw-2rem)] bg-white rounded-2xl shadow-2xl border border-warm-200"
               role="dialog"
               aria-modal="true"
               aria-label="Accessibility settings"

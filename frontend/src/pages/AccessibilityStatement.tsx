@@ -134,36 +134,37 @@ export default function AccessibilityStatement() {
 
   return (
     <div className={`min-h-screen bg-gradient-to-br from-warm-50 to-iris-50/30 ${isRTL ? 'direction-rtl' : ''}`} dir={isRTL ? 'rtl' : 'ltr'}>
-      {/* Hero Section */}
-      <div className="bg-gradient-to-r from-iris-700 via-iris-800 to-iris-900 text-white">
-        <div className="max-w-4xl mx-auto px-4 py-12 md:py-16">
-          <div className="flex items-center justify-between mb-4">
-            <div className="flex items-center gap-3">
-              <div className="p-3 bg-white/10 rounded-xl backdrop-blur">
-                <Accessibility className="w-8 h-8" />
+      <main>
+        {/* Hero Section */}
+        <header className="bg-gradient-to-r from-iris-700 via-iris-800 to-iris-900 text-white">
+          <div className="max-w-4xl mx-auto px-4 py-12 md:py-16">
+            <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center gap-3">
+                <div className="p-3 bg-white/10 rounded-xl backdrop-blur">
+                  <Accessibility className="w-8 h-8" aria-hidden="true" />
+                </div>
+                <h1 className="text-3xl md:text-4xl font-bold">{t.title}</h1>
               </div>
-              <h1 className="text-3xl md:text-4xl font-bold">{t.title}</h1>
+              {/* Language Toggle */}
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setLang(lang === 'en' ? 'he' : 'en')}
+                className="bg-white/10 border-white/30 text-white hover:bg-white/20 hover:text-white gap-2"
+                aria-label={`Switch to ${lang === 'en' ? 'Hebrew' : 'English'}`}
+              >
+                <Languages className="w-4 h-4" aria-hidden="true" />
+                {t.langSwitch}
+              </Button>
             </div>
-            {/* Language Toggle */}
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => setLang(lang === 'en' ? 'he' : 'en')}
-              className="bg-white/10 border-white/30 text-white hover:bg-white/20 hover:text-white gap-2"
-              aria-label={`Switch to ${lang === 'en' ? 'Hebrew' : 'English'}`}
-            >
-              <Languages className="w-4 h-4" />
-              {t.langSwitch}
-            </Button>
+            <p className="text-lg text-iris-100">
+              {t.subtitle}
+            </p>
           </div>
-          <p className="text-lg text-iris-100">
-            {t.subtitle}
-          </p>
-        </div>
-      </div>
+        </header>
 
-      {/* Content */}
-      <main className="max-w-4xl mx-auto px-4 py-12">
+        {/* Content */}
+        <div className="max-w-4xl mx-auto px-4 py-12">
         <div className="bg-white rounded-2xl shadow-lg p-6 md:p-10 space-y-8">
           
           {/* General Statement */}
@@ -287,11 +288,12 @@ export default function AccessibilityStatement() {
         <div className="mt-8 text-center">
           <Button asChild variant="outline" size="lg" className="gap-2 rounded-xl">
             <Link to={createPageUrl("Home")}>
-              {isRTL ? <ArrowRight className="w-4 h-4" /> : <ArrowLeft className="w-4 h-4" />}
+              {isRTL ? <ArrowRight className="w-4 h-4" aria-hidden="true" /> : <ArrowLeft className="w-4 h-4" aria-hidden="true" />}
               {t.backHome}
             </Link>
           </Button>
         </div>
+      </div>
       </main>
     </div>
   );

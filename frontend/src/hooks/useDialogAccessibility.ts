@@ -170,6 +170,10 @@ export function useMobileDialogAccessibility({
 }: UseDialogAccessibilityOptions & { isMobile: boolean }) {
   const dialogRef = useRef<HTMLDivElement>(null);
   const previousActiveElement = useRef<Element | null>(null);
+  
+  // Use ref to avoid stale closure issues with onClose
+  const onCloseRef = useRef(onClose);
+  onCloseRef.current = onClose;
 
   // Store the element that was focused when opening
   useEffect(() => {
@@ -187,14 +191,14 @@ export function useMobileDialogAccessibility({
 
     const handleEscape = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
-        onClose();
+        onCloseRef.current();
         (previousActiveElement.current as HTMLElement)?.focus?.();
       }
     };
 
     document.addEventListener('keydown', handleEscape);
     return () => document.removeEventListener('keydown', handleEscape);
-  }, [isOpen, isMobile, onClose]);
+  }, [isOpen, isMobile]); // onClose removed from deps - using ref instead
 
   // Auto-focus dialog
   useEffect(() => {
