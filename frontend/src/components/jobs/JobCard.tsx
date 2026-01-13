@@ -51,37 +51,38 @@ export default function JobCard({ job, onSave, isSaved, onApply, isApplied, inde
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.3, delay: index * 0.05 }}
     >
-        <Card 
-          role="article"
-          aria-label={`${job.title} at ${job.company}`}
-          className="group bg-white hover:shadow-xl transition-all duration-300 border border-warm-100 hover:border-warm-200 overflow-hidden rounded-xl card-hover">
-          <CardContent className="p-6">
-            <div className="flex justify-between items-start gap-4">
-              <div className="flex-1 min-w-0">
-                <div className="flex items-start gap-4">
-                  <CompanyLogo name={job.company} className="w-12 h-12 hidden sm:flex" aria-hidden="true" />
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 mb-2 flex-wrap">
-                      <Badge
-                        variant="outline"
-                        className={`${levelColors[job.level] || 'bg-warm-50 text-warm-700 border-warm-200'} text-xs font-medium`}
-                      >
-                        {job.level}
+      <Card 
+        role="article"
+        aria-label={`${job.title} at ${job.company}`}
+        className="group bg-white hover:shadow-xl transition-all duration-300 border border-warm-100 hover:border-warm-200 overflow-hidden rounded-xl card-hover"
+      >
+        <CardContent className="p-6">
+          <div className="flex justify-between items-start gap-4">
+            <div className="flex-1 min-w-0">
+              <div className="flex items-start gap-4">
+                <CompanyLogo name={job.company} className="w-12 h-12 hidden sm:flex" aria-hidden="true" />
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 mb-2 flex-wrap">
+                    <Badge
+                      variant="outline"
+                      className={`${levelColors[job.level] || 'bg-warm-50 text-warm-700 border-warm-200'} text-xs font-medium`}
+                    >
+                      {job.level}
+                    </Badge>
+                    <Badge variant="outline" className="bg-iris-50 text-iris-700 border-iris-200 text-xs">
+                      {job.job_category}
+                    </Badge>
+                    {isSaved && (
+                      <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-emerald-200 gap-1 pl-1.5">
+                        <BookmarkCheck className="w-3 h-3" aria-hidden="true" />
+                        Saved
                       </Badge>
-                      <Badge variant="outline" className="bg-iris-50 text-iris-700 border-iris-200 text-xs">
-                        {job.job_category}
-                      </Badge>
-                      {isSaved && (
-                        <Badge className="bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-emerald-200 gap-1 pl-1.5">
-                          <BookmarkCheck className="w-3 h-3" aria-hidden="true" />
-                          Saved
-                        </Badge>
-                      )}
-                    </div>
+                    )}
+                  </div>
 
-                    <h3 className="font-semibold text-lg text-warm-900 mb-1 group-hover:text-iris-600 transition-colors truncate">
-                      {job.title}
-                    </h3>
+                  <h3 className="font-semibold text-lg text-warm-900 mb-1 group-hover:text-iris-600 transition-colors truncate">
+                    {job.title}
+                  </h3>
 
                   <div className="flex items-center gap-2 text-warm-600 mb-3">
                     <span className="font-medium">{job.company}</span>

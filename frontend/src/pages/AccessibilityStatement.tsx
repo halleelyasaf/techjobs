@@ -4,6 +4,12 @@ import { createPageUrl } from "@/utils";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, ArrowRight, Accessibility, Mail, MessageCircle, Languages } from "lucide-react";
 
+// Configuration: Update this date when the accessibility statement is reviewed
+const ACCESSIBILITY_STATEMENT_LAST_UPDATED = {
+  en: "January 13, 2026",
+  he: "13 בינואר 2026"
+} as const;
+
 type Language = 'en' | 'he';
 
 const content = {
@@ -123,8 +129,7 @@ export default function AccessibilityStatement() {
     };
   }, [lang]);
 
-  // Static date - update this when the accessibility statement is reviewed
-  const lastUpdatedDate = lang === 'he' ? '13 בינואר 2026' : 'January 13, 2026';
+  const lastUpdatedDate = ACCESSIBILITY_STATEMENT_LAST_UPDATED[lang];
 
   return (
     <div className={`min-h-screen bg-gradient-to-br from-warm-50 to-iris-50/30 ${isRTL ? 'direction-rtl' : ''}`} dir={isRTL ? 'rtl' : 'ltr'}>
