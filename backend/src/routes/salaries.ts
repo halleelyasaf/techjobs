@@ -11,6 +11,7 @@ import {
   fetchGlassdoorSalaries,
   type SalaryReport
 } from '../services/salaryFetcher';
+import { populateAllCompanySalaries } from '../services/companyDataPopulator';
 
 const router = Router();
 
@@ -239,6 +240,27 @@ router.post('/fetch-glassdoor', async (req: Request, res: Response) => {
   } catch (error) {
     console.error('Error fetching Glassdoor salaries:', error);
     res.status(500).json({ error: 'Failed to start Glassdoor fetch' });
+  }
+});
+
+// Populate salary estimates for all companies from job listings (admin only)
+router.post('/populate-all-companies', async (req: Request, res: Response) => {
+  try {
+    const adminKey = req.headers['x-admin-key'];
+    if (adminKey !== process.env.ADMIN_KEY) {
+      res.status(401).json({ error: 'Unauthorized' });
+      return;
+    }
+
+    // This can take a while, so run in background
+    populateAllCompanySalaries()
+      .then(result => console.log('Company population result:', result))
+      .catch(console.error);
+    
+    res.json({ message: 'Company salary population started in background' });
+  } catch (error) {
+    console.error('Error populating company salaries:', error);
+    res.status(500).json({ error: 'Failed to start company salary population' });
   }
 });
 
