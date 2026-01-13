@@ -120,10 +120,10 @@ export default function JobCard({ job, onSave, isSaved, onApply, isApplied, inde
                         : 'text-warm-500 hover:text-emerald-600'
                     }`}
                     aria-label={`Estimated salary: ${formatSalaryRange(salaryEstimate)}${hasCompanySpecificData ? ' (based on company data)' : ''} - Click to view on Glassdoor`}
-                    title={hasCompanySpecificData 
-                      ? `הערכת שכר מבוססת נתוני חברה (${companyTier === 'top' ? 'שכר גבוה מאוד' : companyTier === 'high' ? 'שכר גבוה' : companyTier === 'mid' ? 'שכר ממוצע-גבוה' : 'שכר ממוצע'}) - לחץ לצפייה ב-Glassdoor`
-                      : 'הערכת שכר כללית - לחץ לצפייה ב-Glassdoor'
-                    }
+                  title={hasCompanySpecificData 
+                    ? `Salary estimate based on company data (${companyTier === 'top' ? 'Top paying' : companyTier === 'high' ? 'High paying' : companyTier === 'mid' ? 'Above average' : 'Average'}) - Click to view on Glassdoor`
+                    : 'General salary estimate - Click to view on Glassdoor'
+                  }
                   >
                     <Banknote className="w-4 h-4" aria-hidden="true" />
                     <span className="font-medium">{formatSalaryRange(salaryEstimate)}</span>
@@ -140,10 +140,10 @@ export default function JobCard({ job, onSave, isSaved, onApply, isApplied, inde
                   <button
                     onClick={() => setShowSalaryModal(true)}
                     className="text-xs text-warm-400 hover:text-iris-600 transition-colors flex items-center gap-0.5"
-                    title="דווח על השכר שלך"
+                    title="Report your salary"
                   >
                     <MessageSquarePlus className="w-3 h-3" />
-                    <span className="hidden sm:inline">דווח</span>
+                    <span className="hidden sm:inline">Report</span>
                   </button>
                 </div>
               </div>

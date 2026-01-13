@@ -103,15 +103,15 @@ export default function SalaryReportModal({
               <CheckCircle2 className="w-8 h-8 text-emerald-600" />
             </div>
             <h3 className="text-xl font-semibold text-warm-900 mb-2">
-              תודה רבה! 🙏
+              Thank You! 🙏
             </h3>
             <p className="text-warm-600 mb-6">
-              הדיווח שלך התקבל ויעבור בדיקה.
+              Your report has been submitted and will be reviewed.
               <br />
-              הנתונים יעזרו לאחרים לקבל מידע מדויק יותר על שכר.
+              This data will help others get accurate salary information.
             </p>
             <Button onClick={handleClose} className="bg-iris-600 hover:bg-iris-700">
-              סגור
+              Close
             </Button>
           </div>
         </DialogContent>
@@ -125,12 +125,12 @@ export default function SalaryReportModal({
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2 text-xl">
             <Banknote className="w-6 h-6 text-emerald-600" />
-            דווח על השכר שלך
+            Report Your Salary
           </DialogTitle>
-          <DialogDescription className="text-right">
-            עזור לאחרים לקבל מידע מדויק על שכר בהייטק הישראלי.
+          <DialogDescription>
+            Help others get accurate salary information for Israeli tech.
             <br />
-            הדיווח אנונימי לחלוטין.
+            Your report is completely anonymous.
           </DialogDescription>
         </DialogHeader>
 
@@ -138,14 +138,14 @@ export default function SalaryReportModal({
           {/* Privacy notice */}
           <div className="flex items-start gap-2 p-3 bg-blue-50 rounded-lg text-sm text-blue-800">
             <Lock className="w-4 h-4 mt-0.5 flex-shrink-0" />
-            <span>הדיווח אנונימי. לא נשמור פרטים מזהים.</span>
+            <span>Anonymous submission. We don't store any identifying information.</span>
           </div>
 
           <div className="grid grid-cols-2 gap-4">
             {/* Company */}
             <div className="space-y-2">
               <Label htmlFor="company">
-                שם החברה <span className="text-red-500">*</span>
+                Company Name <span className="text-red-500">*</span>
               </Label>
               <Input
                 id="company"
@@ -153,14 +153,13 @@ export default function SalaryReportModal({
                 value={formData.company_name}
                 onChange={(e) => setFormData({ ...formData, company_name: e.target.value })}
                 required
-                dir="ltr"
               />
             </div>
 
             {/* Job Title */}
             <div className="space-y-2">
               <Label htmlFor="title">
-                תפקיד <span className="text-red-500">*</span>
+                Job Title <span className="text-red-500">*</span>
               </Label>
               <Input
                 id="title"
@@ -168,7 +167,6 @@ export default function SalaryReportModal({
                 value={formData.job_title}
                 onChange={(e) => setFormData({ ...formData, job_title: e.target.value })}
                 required
-                dir="ltr"
               />
             </div>
           </div>
@@ -177,7 +175,7 @@ export default function SalaryReportModal({
             {/* Base Salary */}
             <div className="space-y-2">
               <Label htmlFor="salary">
-                שכר בסיס חודשי (₪) <span className="text-red-500">*</span>
+                Monthly Base Salary (₪) <span className="text-red-500">*</span>
               </Label>
               <Input
                 id="salary"
@@ -188,22 +186,20 @@ export default function SalaryReportModal({
                 value={formData.base_salary || ''}
                 onChange={(e) => setFormData({ ...formData, base_salary: parseInt(e.target.value) || 0 })}
                 required
-                dir="ltr"
               />
             </div>
 
             {/* Total Compensation */}
             <div className="space-y-2">
               <Label htmlFor="total">
-                סה״כ עלות מעביד (אופציונלי)
+                Total Compensation (optional)
               </Label>
               <Input
                 id="total"
                 type="number"
-                placeholder="כולל בונוסים, אופציות"
+                placeholder="Including bonuses, equity"
                 value={formData.total_compensation || ''}
                 onChange={(e) => setFormData({ ...formData, total_compensation: parseInt(e.target.value) || undefined })}
-                dir="ltr"
               />
             </div>
           </div>
@@ -211,13 +207,13 @@ export default function SalaryReportModal({
           <div className="grid grid-cols-2 gap-4">
             {/* Experience */}
             <div className="space-y-2">
-              <Label htmlFor="experience">שנות ניסיון</Label>
+              <Label htmlFor="experience">Years of Experience</Label>
               <Select
                 value={formData.experience_years?.toString()}
                 onValueChange={(v) => setFormData({ ...formData, experience_years: parseInt(v) })}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="בחר שנות ניסיון" />
+                  <SelectValue placeholder="Select experience" />
                 </SelectTrigger>
                 <SelectContent>
                   {EXPERIENCE_OPTIONS.map((opt) => (
@@ -231,13 +227,13 @@ export default function SalaryReportModal({
 
             {/* Location */}
             <div className="space-y-2">
-              <Label htmlFor="location">מיקום</Label>
+              <Label htmlFor="location">Location</Label>
               <Select
                 value={formData.location}
                 onValueChange={(v) => setFormData({ ...formData, location: v })}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="בחר עיר" />
+                  <SelectValue placeholder="Select city" />
                 </SelectTrigger>
                 <SelectContent>
                   {LOCATIONS.map((loc) => (
@@ -253,7 +249,7 @@ export default function SalaryReportModal({
           {/* Warning */}
           <div className="flex items-start gap-2 p-3 bg-amber-50 rounded-lg text-sm text-amber-800">
             <AlertCircle className="w-4 h-4 mt-0.5 flex-shrink-0" />
-            <span>אנא דווח רק על נתונים אמיתיים. דיווחים שקריים יוסרו.</span>
+            <span>Please report accurate data only. False reports will be removed.</span>
           </div>
 
           {/* Submit */}
@@ -264,14 +260,14 @@ export default function SalaryReportModal({
               onClick={handleClose}
               className="flex-1"
             >
-              ביטול
+              Cancel
             </Button>
             <Button
               type="submit"
               disabled={isSubmitting}
               className="flex-1 bg-emerald-600 hover:bg-emerald-700"
             >
-              {isSubmitting ? 'שולח...' : 'שלח דיווח'}
+              {isSubmitting ? 'Submitting...' : 'Submit Report'}
             </Button>
           </div>
         </form>
