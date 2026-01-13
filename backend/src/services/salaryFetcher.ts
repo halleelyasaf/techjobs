@@ -603,71 +603,55 @@ async function fetchRapidAPIGlassdoor(company: string, jobTitle?: string): Promi
       timeout: 15000,
     });
 
-    console.log(`Glassdoor API response for ${searchTitle}:`, JSON.stringify(response.data).substring(0, 200));
+    console.log(`Glassdoor API response for ${searchTitle}:`, JSON.stringify(response.data).substring(0, 300));
 
-    // Parse the response - structure may vary
-    const data = response.data;
+    // Parse the response from real-time-glassdoor-data API
+    const apiResponse = response.data;
     
-    if (data) {
-      // Try to extract salary data from various possible response formats
-      let minSalary = 0;
-      let maxSalary = 0;
-      let medianSalary = 0;
-
-      // Format 1: Direct salary fields
-      if (data.min_salary || data.minSalary) {
-        minSalary = data.min_salary || data.minSalary || 0;
-        maxSalary = data.max_salary || data.maxSalary || 0;
-        medianSalary = data.median_salary || data.medianSalary || Math.round((minSalary + maxSalary) / 2);
-      }
+    if (apiResponse && apiResponse.status === 'OK' && apiResponse.data) {
+      const data = apiResponse.data;
       
-      // Format 2: Nested salary object
-      if (data.salary) {
-        minSalary = data.salary.min || data.salary.minimum || 0;
-        maxSalary = data.salary.max || data.salary.maximum || 0;
-        medianSalary = data.salary.median || Math.round((minSalary + maxSalary) / 2);
+      // Extract salary data - API returns monthly ILS directly for Israel
+      let minSalary = Math.round(data.min_salary || data.min_base_salary || 0);
+      let maxSalary = Math.round(data.max_salary || data.max_base_salary || 0);
+      let medianSalary = Math.round(data.median_salary || data.median_base_salary || 0);
+      const sampleCount = data.salary_count || 1;
+      const currency = data.salary_currency || 'ILS';
+      const period = data.salary_period || 'MONTH';
+      const confidence = data.confidence || 'MEDIUM';
+
+      // If period is YEAR, convert to monthly
+      if (period === 'YEAR' || period === 'ANNUAL') {
+        minSalary = Math.round(minSalary / 12);
+        maxSalary = Math.round(maxSalary / 12);
+        medianSalary = Math.round(medianSalary / 12);
       }
 
-      // Format 3: Pay estimate format
-      if (data.payEstimate || data.pay_estimate) {
-        const pay = data.payEstimate || data.pay_estimate;
-        minSalary = pay.low || pay.min || 0;
-        maxSalary = pay.high || pay.max || 0;
-        medianSalary = pay.median || pay.average || Math.round((minSalary + maxSalary) / 2);
-      }
-
-      // Format 4: Salary range array
-      if (data.salaryRange && Array.isArray(data.salaryRange)) {
-        minSalary = data.salaryRange[0] || 0;
-        maxSalary = data.salaryRange[1] || data.salaryRange[0] || 0;
-        medianSalary = Math.round((minSalary + maxSalary) / 2);
-      }
-
-      // If salaries are in USD annual, convert to ILS monthly
-      // Glassdoor usually returns annual USD salaries
-      if (minSalary > 10000) { // Likely annual USD
+      // If currency is USD, convert to ILS
+      if (currency === 'USD') {
         const usdToIls = 3.7;
-        minSalary = Math.round((minSalary * usdToIls) / 12);
-        maxSalary = Math.round((maxSalary * usdToIls) / 12);
-        medianSalary = Math.round((medianSalary * usdToIls) / 12);
+        minSalary = Math.round(minSalary * usdToIls);
+        maxSalary = Math.round(maxSalary * usdToIls);
+        medianSalary = Math.round(medianSalary * usdToIls);
       }
 
       if (minSalary > 0 && maxSalary > 0) {
+        const jobTitleFromApi = data.job_title || searchTitle;
         return {
-          company_name: company,
-          company_name_normalized: normalize(company),
-          job_title: jobTitle || searchTitle,
-          job_title_normalized: normalize(jobTitle || searchTitle),
-          location: 'Israel',
+          company_name: company || 'General',
+          company_name_normalized: normalize(company || 'general'),
+          job_title: jobTitleFromApi,
+          job_title_normalized: normalize(jobTitleFromApi),
+          location: data.location || 'Israel',
           min_salary: minSalary,
           max_salary: maxSalary,
-          median_salary: medianSalary,
+          median_salary: medianSalary || Math.round((minSalary + maxSalary) / 2),
           currency: 'ILS',
           salary_type: 'monthly',
-          sample_count: data.count || data.sample_size || 1,
+          sample_count: sampleCount,
           source: 'glassdoor',
-          source_url: `https://www.glassdoor.com/Salaries/${encodeURIComponent(searchTitle)}-israel-salaries`,
-          confidence: 'high',
+          source_url: data.link || `https://www.glassdoor.com/Salaries/${encodeURIComponent(jobTitleFromApi)}-israel-salaries`,
+          confidence: confidence === 'VERY_HIGH' || confidence === 'HIGH' ? 'high' : confidence === 'MEDIUM' ? 'medium' : 'low',
         };
       }
     }
