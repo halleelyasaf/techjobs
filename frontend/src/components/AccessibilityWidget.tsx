@@ -50,7 +50,11 @@ export default function AccessibilityWidget() {
     root.classList.toggle('big-cursor', settings.bigCursor);
     
     // Save to localStorage
-    localStorage.setItem('accessibility-settings', JSON.stringify(settings));
+    try {
+      localStorage.setItem('accessibility-settings', JSON.stringify(settings));
+    } catch {
+      // localStorage may be unavailable in private browsing or quota exceeded
+    }
   }, [settings]);
 
   // Handle Escape key and return focus to trigger button

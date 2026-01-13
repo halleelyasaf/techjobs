@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from "react-router-dom";
 import { createPageUrl } from "@/utils";
 import { Button } from "@/components/ui/button";
@@ -15,18 +15,53 @@ export default function LayoutHeader({ variant = 'light' }: LayoutHeaderProps) {
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const { user, isAuthenticated, isLoading, login, logout } = useAuth();
+  const menuButtonRef = useRef<HTMLButtonElement>(null);
+  const drawerRef = useRef<HTMLDivElement>(null);
 
   const isDark = variant === 'dark';
 
-  // Handle Escape key to close mobile menu
+  // Focus the drawer when it opens
   useEffect(() => {
-    const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && isMobileMenuOpen) {
+    if (isMobileMenuOpen && drawerRef.current) {
+      setTimeout(() => drawerRef.current?.focus(), 100);
+    }
+  }, [isMobileMenuOpen]);
+
+  // Handle Escape key and focus trap for mobile menu
+  useEffect(() => {
+    if (!isMobileMenuOpen) return;
+
+    const handleKeyDown = (e: KeyboardEvent) => {
+      // Close on Escape and return focus
+      if (e.key === 'Escape') {
         setIsMobileMenuOpen(false);
+        menuButtonRef.current?.focus();
+        return;
+      }
+
+      // Focus trap on Tab
+      if (e.key !== 'Tab') return;
+
+      const drawer = drawerRef.current;
+      if (!drawer) return;
+
+      const focusableElements = drawer.querySelectorAll<HTMLElement>(
+        'button, [href], input, select, textarea, [tabindex]:not([tabindex="-1"])'
+      );
+      const firstElement = focusableElements[0];
+      const lastElement = focusableElements[focusableElements.length - 1];
+
+      if (e.shiftKey && document.activeElement === firstElement) {
+        e.preventDefault();
+        lastElement?.focus();
+      } else if (!e.shiftKey && document.activeElement === lastElement) {
+        e.preventDefault();
+        firstElement?.focus();
       }
     };
-    document.addEventListener('keydown', handleEscape);
-    return () => document.removeEventListener('keydown', handleEscape);
+
+    document.addEventListener('keydown', handleKeyDown);
+    return () => document.removeEventListener('keydown', handleKeyDown);
   }, [isMobileMenuOpen]);
 
   const handleLogin = () => {
@@ -174,6 +209,7 @@ export default function LayoutHeader({ variant = 'light' }: LayoutHeaderProps) {
 
           {/* Mobile Menu Button */}
           <Button
+            ref={menuButtonRef}
             variant="ghost"
             size="icon"
             className={`md:hidden ${styles.mobileMenuButton}`}
@@ -203,7 +239,9 @@ export default function LayoutHeader({ variant = 'light' }: LayoutHeaderProps) {
 
             {/* Drawer */}
             <motion.div
+              ref={drawerRef}
               id="mobile-menu"
+              tabIndex={-1}
               initial={{ x: '100%' }}
               animate={{ x: 0 }}
               exit={{ x: '100%' }}
@@ -228,7 +266,10 @@ export default function LayoutHeader({ variant = 'light' }: LayoutHeaderProps) {
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => setIsMobileMenuOpen(false)}
+                    onClick={() => {
+                      setIsMobileMenuOpen(false);
+                      menuButtonRef.current?.focus();
+                    }}
                     aria-label="Close menu"
                   >
                     <X className="w-6 h-6" aria-hidden="true" />
