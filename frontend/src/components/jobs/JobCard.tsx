@@ -7,7 +7,7 @@ import { motion } from "framer-motion";
 import { usePostHog } from 'posthog-js/react';
 import CompanyLogo from "@/components/CompanyLogo";
 import type { Job } from "./jobsData";
-import { estimateSalary, formatSalaryRange, generateGlassdoorUrl, hasCompanyData, getCompanyTier } from "./salaryEstimate";
+import { estimateSalary, formatSalaryRange, generateGlassdoorUrl } from "./salaryEstimate";
 import SalaryReportModal from "@/components/SalaryReportModal";
 
 const sizeLabels: Record<string, string> = {
@@ -39,8 +39,6 @@ export default function JobCard({ job, onSave, isSaved, onApply, isApplied, inde
   const [showSalaryModal, setShowSalaryModal] = useState(false);
   const salaryEstimate = estimateSalary(job);
   const glassdoorUrl = generateGlassdoorUrl(job);
-  const hasCompanySpecificData = hasCompanyData(job.company);
-  const companyTier = getCompanyTier(job.company);
 
   const handleApplyClick = () => {
     posthog.capture('job_apply_clicked', {
@@ -114,28 +112,12 @@ export default function JobCard({ job, onSave, isSaved, onApply, isApplied, inde
                     href={glassdoorUrl}
                     target="_blank"
                     rel="noopener noreferrer"
-                    className={`flex items-center gap-1.5 transition-colors group/salary ${
-                      hasCompanySpecificData 
-                        ? 'text-emerald-600 hover:text-emerald-700' 
-                        : 'text-warm-500 hover:text-emerald-600'
-                    }`}
-                    aria-label={`Estimated salary: ${formatSalaryRange(salaryEstimate)}${hasCompanySpecificData ? ' (based on company data)' : ''} - Click to view on Glassdoor`}
-                  title={hasCompanySpecificData 
-                    ? `Salary estimate based on company data (${companyTier === 'top' ? 'Top paying' : companyTier === 'high' ? 'High paying' : companyTier === 'mid' ? 'Above average' : 'Average'}) - Click to view on Glassdoor`
-                    : 'General salary estimate - Click to view on Glassdoor'
-                  }
+                    className="flex items-center gap-1.5 text-warm-500 hover:text-emerald-600 transition-colors"
+                    aria-label={`Estimated salary: ${formatSalaryRange(salaryEstimate)} - Click to view on Glassdoor`}
+                    title="Salary estimate - Click to view on Glassdoor"
                   >
                     <Banknote className="w-4 h-4" aria-hidden="true" />
                     <span className="font-medium">{formatSalaryRange(salaryEstimate)}</span>
-                    {hasCompanySpecificData && (
-                      <span className={`text-xs px-1.5 py-0.5 rounded-full ${
-                        companyTier === 'top' ? 'bg-amber-100 text-amber-700' :
-                        companyTier === 'high' ? 'bg-emerald-100 text-emerald-700' :
-                        'bg-blue-100 text-blue-700'
-                      }`}>
-                        {companyTier === 'top' ? '💰 Top Pay' : companyTier === 'high' ? '📈 High Pay' : '✓ Verified'}
-                      </span>
-                    )}
                   </a>
                   <button
                     onClick={() => setShowSalaryModal(true)}
