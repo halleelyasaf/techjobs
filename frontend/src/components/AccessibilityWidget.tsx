@@ -103,7 +103,7 @@ export default function AccessibilityWidget() {
       <Button
         ref={triggerRef}
         onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-4 left-4 z-50 w-14 h-14 rounded-full bg-iris-600 hover:bg-iris-700 text-white shadow-lg"
+        className="fixed bottom-4 right-4 z-50 w-14 h-14 rounded-full bg-iris-600 hover:bg-iris-700 text-white shadow-lg"
         aria-label={isOpen ? 'Close accessibility menu' : 'Open accessibility menu'}
         aria-expanded={isOpen}
         aria-controls="accessibility-panel"
@@ -133,7 +133,7 @@ export default function AccessibilityWidget() {
               animate={{ opacity: 1, y: 0, scale: 1 }}
               exit={{ opacity: 0, y: 20, scale: 0.95 }}
               transition={{ duration: 0.2 }}
-              className="fixed bottom-20 left-4 z-[101] w-80 max-w-[calc(100vw-2rem)] bg-white rounded-2xl shadow-2xl border border-warm-200"
+              className="fixed bottom-20 right-4 z-[101] w-80 max-w-[calc(100vw-2rem)] bg-white rounded-2xl shadow-2xl border border-warm-200"
               role="dialog"
               aria-modal="true"
               aria-label="Accessibility settings"
